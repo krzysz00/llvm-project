@@ -5,7 +5,7 @@
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck -enable-var-scope -check-prefixes=GFX10-PACKED %s
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1100 -verify-machineinstrs | FileCheck -enable-var-scope -check-prefixes=GFX11-PACKED %s
 
-define amdgpu_ps half @tbuffer_load_d16_x(<4 x i32> inreg %rsrc) {
+define amdgpu_ps half @tbuffer_load_d16_x(ptr addrspace(8) inreg %rsrc) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_load_d16_x:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    v_mov_b32_e32 v0, 0 ; encoding: [0x80,0x02,0x00,0x7e]
@@ -34,11 +34,11 @@ define amdgpu_ps half @tbuffer_load_d16_x(<4 x i32> inreg %rsrc) {
 ; GFX11-PACKED-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-PACKED-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call half @llvm.amdgcn.struct.tbuffer.load.f16(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
+  %data = call half @llvm.amdgcn.struct.tbuffer.load.f16(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
   ret half %data
 }
 
-define amdgpu_ps half @tbuffer_load_d16_xy(<4 x i32> inreg %rsrc) {
+define amdgpu_ps half @tbuffer_load_d16_xy(ptr addrspace(8) inreg %rsrc) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_load_d16_xy:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    v_mov_b32_e32 v0, 0 ; encoding: [0x80,0x02,0x00,0x7e]
@@ -71,12 +71,12 @@ define amdgpu_ps half @tbuffer_load_d16_xy(<4 x i32> inreg %rsrc) {
 ; GFX11-PACKED-NEXT:    v_lshrrev_b32_e32 v0, 16, v0
 ; GFX11-PACKED-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <2 x half> @llvm.amdgcn.struct.tbuffer.load.v2f16(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
+  %data = call <2 x half> @llvm.amdgcn.struct.tbuffer.load.v2f16(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
   %elt = extractelement <2 x half> %data, i32 1
   ret half %elt
 }
 
-define amdgpu_ps half @tbuffer_load_d16_xyz(<4 x i32> inreg %rsrc) {
+define amdgpu_ps half @tbuffer_load_d16_xyz(ptr addrspace(8) inreg %rsrc) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_load_d16_xyz:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    v_mov_b32_e32 v0, 0 ; encoding: [0x80,0x02,0x00,0x7e]
@@ -109,12 +109,12 @@ define amdgpu_ps half @tbuffer_load_d16_xyz(<4 x i32> inreg %rsrc) {
 ; GFX11-PACKED-NEXT:    v_mov_b32_e32 v0, v1
 ; GFX11-PACKED-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <3 x half> @llvm.amdgcn.struct.tbuffer.load.v3f16(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
+  %data = call <3 x half> @llvm.amdgcn.struct.tbuffer.load.v3f16(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
   %elt = extractelement <3 x half> %data, i32 2
   ret half %elt
 }
 
-define amdgpu_ps half @tbuffer_load_d16_xyzw(<4 x i32> inreg %rsrc) {
+define amdgpu_ps half @tbuffer_load_d16_xyzw(ptr addrspace(8) inreg %rsrc) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_load_d16_xyzw:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    v_mov_b32_e32 v0, 0 ; encoding: [0x80,0x02,0x00,0x7e]
@@ -147,12 +147,12 @@ define amdgpu_ps half @tbuffer_load_d16_xyzw(<4 x i32> inreg %rsrc) {
 ; GFX11-PACKED-NEXT:    v_lshrrev_b32_e32 v0, 16, v1
 ; GFX11-PACKED-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x half> @llvm.amdgcn.struct.tbuffer.load.v4f16(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
+  %data = call <4 x half> @llvm.amdgcn.struct.tbuffer.load.v4f16(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 22, i32 0)
   %elt = extractelement <4 x half> %data, i32 3
   ret half %elt
 }
 
-declare half @llvm.amdgcn.struct.tbuffer.load.f16(<4 x i32>, i32, i32, i32, i32, i32)
-declare <2 x half> @llvm.amdgcn.struct.tbuffer.load.v2f16(<4 x i32>, i32, i32, i32, i32, i32)
-declare <3 x half> @llvm.amdgcn.struct.tbuffer.load.v3f16(<4 x i32>, i32, i32, i32, i32, i32)
-declare <4 x half> @llvm.amdgcn.struct.tbuffer.load.v4f16(<4 x i32>, i32, i32, i32, i32, i32)
+declare half @llvm.amdgcn.struct.tbuffer.load.f16(ptr addrspace(8), i32, i32, i32, i32, i32)
+declare <2 x half> @llvm.amdgcn.struct.tbuffer.load.v2f16(ptr addrspace(8), i32, i32, i32, i32, i32)
+declare <3 x half> @llvm.amdgcn.struct.tbuffer.load.v3f16(ptr addrspace(8), i32, i32, i32, i32, i32)
+declare <4 x half> @llvm.amdgcn.struct.tbuffer.load.v4f16(ptr addrspace(8), i32, i32, i32, i32, i32)

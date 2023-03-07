@@ -3,7 +3,7 @@
 ; FIXME: Test with SI when argument lowering not broken for f16
 
 ; Natural mapping
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -12,18 +12,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
 ; Copies for VGPR arguments
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__sgpr_val__sgpr_voffset__sgpr_soffset(<4 x i32> inreg %rsrc, float inreg %val, i32 inreg %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__sgpr_val__sgpr_voffset__sgpr_soffset(ptr addrspace(8) inreg %rsrc, float inreg %val, i32 inreg %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__sgpr_val__sgpr_voffset__sgpr_soffset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $sgpr7, $sgpr8
@@ -32,20 +32,20 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__sgpr_val__sgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:sreg_32 = COPY $sgpr6
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:sreg_32 = COPY $sgpr7
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr8
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY [[COPY4]]
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:vgpr_32 = COPY [[COPY5]]
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY7]], [[COPY8]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY7]], [[COPY8]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
 ; Waterfall for rsrc
-define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset(<4 x i32> %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset(ptr addrspace(8) %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -55,10 +55,10 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr5
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr2
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B64_:%[0-9]+]]:sreg_64_xexec = S_MOV_B64 $exec
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -81,7 +81,7 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE1]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE1]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -92,12 +92,12 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
 ; Waterfall for soffset
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -107,10 +107,10 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr2
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B64_:%[0-9]+]]:sreg_64_xexec = S_MOV_B64 $exec
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -124,7 +124,7 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[V_READFIRSTLANE_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[V_READFIRSTLANE_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -135,12 +135,12 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
 ; Waterfall for rsrc and soffset
-define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset(<4 x i32> %rsrc, float %val, i32 %voffset, i32 %soffset) {
+define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset(ptr addrspace(8) %rsrc, float %val, i32 %voffset, i32 %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr_soffset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -150,10 +150,10 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr5
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr6
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B64_:%[0-9]+]]:sreg_64_xexec = S_MOV_B64 $exec
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -179,7 +179,7 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE1]], [[V_READFIRSTLANE_B32_4]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE1]], [[V_READFIRSTLANE_B32_4]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -190,11 +190,11 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__vgpr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -203,17 +203,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 1, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 1, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 1)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 1)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -222,17 +222,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 2, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 2, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 2)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 2)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -241,17 +241,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 3, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 3, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 3)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 3)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_dlc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_dlc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_dlc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -260,17 +260,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 4, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 4, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 4)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 4)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc_dlc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc_dlc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_slc_dlc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -279,17 +279,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 6, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 6, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 6)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 6)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_dlc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_dlc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_dlc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -298,17 +298,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 5, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 5, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 5)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 5)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc_dlc(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc_dlc(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_glc_slc_dlc
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -317,17 +317,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 7, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 7, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 7)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 7)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f32(<4 x i32> inreg %rsrc, <2 x float> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f32(ptr addrspace(8) inreg %rsrc, <2 x float> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f32
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1, $vgpr2
@@ -336,19 +336,19 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE1]], [[COPY6]], [[REG_SEQUENCE]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s32>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE]], [[COPY6]], [[REG_SEQUENCE1]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s32>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v2f32(<2 x float> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f32(<2 x float> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v3f32(<4 x i32> inreg %rsrc, <3 x float> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v3f32(ptr addrspace(8) inreg %rsrc, <3 x float> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v3f32
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1, $vgpr2, $vgpr3
@@ -357,20 +357,20 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr2
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_96 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1, [[COPY6]], %subreg.sub2
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_96 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1, [[COPY6]], %subreg.sub2
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY $vgpr3
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORDX3_OFFEN_exact [[REG_SEQUENCE1]], [[COPY7]], [[REG_SEQUENCE]], [[COPY8]], 0, 0, 0, implicit $exec :: (dereferenceable store (<3 x s32>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORDX3_OFFEN_exact [[REG_SEQUENCE]], [[COPY7]], [[REG_SEQUENCE1]], [[COPY8]], 0, 0, 0, implicit $exec :: (dereferenceable store (<3 x s32>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v3f32(<3 x float> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v3f32(<3 x float> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f32(<4 x i32> inreg %rsrc, <4 x float> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f32(ptr addrspace(8) inreg %rsrc, <4 x float> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f32
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1, $vgpr2, $vgpr3, $vgpr4
@@ -379,21 +379,21 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1, [[COPY6]], %subreg.sub2, [[COPY7]], %subreg.sub3
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1, [[COPY6]], %subreg.sub2, [[COPY7]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORDX4_OFFEN_exact [[REG_SEQUENCE1]], [[COPY8]], [[REG_SEQUENCE]], [[COPY9]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s32>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORDX4_OFFEN_exact [[REG_SEQUENCE]], [[COPY8]], [[REG_SEQUENCE1]], [[COPY9]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s32>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v4f32(<4 x float> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v4f32(<4 x float> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i8(<4 x i32> inreg %rsrc, i32 %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i8(ptr addrspace(8) inreg %rsrc, i32 %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i8
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -402,18 +402,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_BYTE_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s8), addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_BYTE_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s8) into %ir.rsrc, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %val.trunc = trunc i32 %val to i8
-  call void @llvm.amdgcn.raw.buffer.store.i8(i8 %val.trunc, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.i8(i8 %val.trunc, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i16(<4 x i32> inreg %rsrc, i32 %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i16(ptr addrspace(8) inreg %rsrc, i32 %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_i16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -422,18 +422,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_SHORT_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s16), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_SHORT_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s16) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %val.trunc = trunc i32 %val to i16
-  call void @llvm.amdgcn.raw.buffer.store.i16(i16 %val.trunc, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.i16(i16 %val.trunc, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f16(<4 x i32> inreg %rsrc, half %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f16(ptr addrspace(8) inreg %rsrc, half %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -442,17 +442,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_SHORT_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s16), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_SHORT_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s16) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f16(half %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f16(half %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -461,17 +461,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16(<4 x i32> inreg %rsrc, <4 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16(ptr addrspace(8) inreg %rsrc, <4 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1, $vgpr2
@@ -480,19 +480,19 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE1]], [[COPY6]], [[REG_SEQUENCE]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE]], [[COPY6]], [[REG_SEQUENCE1]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16(<4 x i32> %rsrc, <4 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16(ptr addrspace(8) %rsrc, <4 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v4f16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -502,12 +502,12 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY4]], %subreg.sub0, [[COPY5]], %subreg.sub1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY $vgpr6
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:sreg_32 = COPY $sgpr2
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B64_:%[0-9]+]]:sreg_64_xexec = S_MOV_B64 $exec
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -518,8 +518,8 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[V_READFIRSTLANE_B32_2:%[0-9]+]]:sreg_32 = V_READFIRSTLANE_B32 [[COPY2]], implicit $exec
   ; CHECK-NEXT:   [[V_READFIRSTLANE_B32_3:%[0-9]+]]:sreg_32 = V_READFIRSTLANE_B32 [[COPY3]], implicit $exec
   ; CHECK-NEXT:   [[REG_SEQUENCE2:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[V_READFIRSTLANE_B32_]], %subreg.sub0, [[V_READFIRSTLANE_B32_1]], %subreg.sub1, [[V_READFIRSTLANE_B32_2]], %subreg.sub2, [[V_READFIRSTLANE_B32_3]], %subreg.sub3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:vreg_64 = COPY [[REG_SEQUENCE]].sub0_sub1
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:vreg_64 = COPY [[REG_SEQUENCE]].sub2_sub3
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:vreg_64 = COPY [[REG_SEQUENCE1]].sub0_sub1
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:vreg_64 = COPY [[REG_SEQUENCE1]].sub2_sub3
   ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:sreg_64 = COPY [[REG_SEQUENCE2]].sub0_sub1
   ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:sreg_64 = COPY [[REG_SEQUENCE2]].sub2_sub3
   ; CHECK-NEXT:   [[V_CMP_EQ_U64_e64_:%[0-9]+]]:sreg_64_xexec = V_CMP_EQ_U64_e64 [[COPY10]], [[COPY8]], implicit $exec
@@ -530,7 +530,7 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE1]], [[COPY6]], [[REG_SEQUENCE2]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORDX2_OFFEN_exact [[REG_SEQUENCE]], [[COPY6]], [[REG_SEQUENCE2]], [[COPY7]], 0, 0, 0, implicit $exec :: (dereferenceable store (<4 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -541,11 +541,11 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half> %val, <4 x i32> %rsrc, i32 %voffset, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4095(<4 x i32> inreg %rsrc, float %val, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4095(ptr addrspace(8) inreg %rsrc, float %val, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4095
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0
@@ -554,16 +554,16 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_v
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFSET_exact [[COPY4]], [[REG_SEQUENCE]], [[COPY5]], 4095, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFSET_exact [[COPY4]], [[REG_SEQUENCE]], [[COPY5]], 4095, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 4095, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 4095, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4096(<4 x i32> inreg %rsrc, float %val, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4096(ptr addrspace(8) inreg %rsrc, float %val, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_voffset4096
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0
@@ -572,18 +572,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__sgpr_soffset_f32_v
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:sreg_32 = COPY $sgpr6
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY [[S_MOV_B32_]]
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY6]], [[REG_SEQUENCE]], [[COPY5]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY6]], [[REG_SEQUENCE]], [[COPY5]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 4096, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 4096, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_16(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_16(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -592,18 +592,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 16, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 16, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 16
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4095(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4095(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4095
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -612,18 +612,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 4095, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 4095, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 4095
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4096(<4 x i32> inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4096(ptr addrspace(8) inreg %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_f32_voffset_add_4096
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -632,21 +632,21 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY [[S_MOV_B32_]]
   ; CHECK-NEXT:   [[V_ADD_CO_U32_e64_:%[0-9]+]]:vgpr_32, dead [[V_ADD_CO_U32_e64_1:%[0-9]+]]:sreg_64_xexec = V_ADD_CO_U32_e64 [[COPY5]], [[COPY7]], 0, implicit $exec
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 4096
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4095(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4095(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4095
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -655,17 +655,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4095
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[S_MOV_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[S_MOV_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset, i32 4095, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 4095, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4096(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4096(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset4096
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -674,17 +674,17 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[S_MOV_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[S_MOV_B32_]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset, i32 4096, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset, i32 4096, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_16(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_16(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -693,18 +693,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 16, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 16, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 16
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4095(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4095(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4095
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -713,18 +713,18 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 4095, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY5]], [[REG_SEQUENCE]], [[COPY6]], 4095, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 4095
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4096(<4 x i32> inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4096(ptr addrspace(8) inreg %rsrc, <2 x half> %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_v2f16_soffset_add_4096
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $sgpr2, $sgpr3, $sgpr4, $sgpr5, $sgpr6, $vgpr0, $vgpr1
@@ -733,22 +733,22 @@ define amdgpu_ps void @raw_buffer_store__sgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:sreg_32 = COPY $sgpr3
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sreg_32 = COPY $sgpr4
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_32 = COPY $sgpr5
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr0
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr6
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY [[S_MOV_B32_]]
   ; CHECK-NEXT:   [[V_ADD_CO_U32_e64_:%[0-9]+]]:vgpr_32, dead [[V_ADD_CO_U32_e64_1:%[0-9]+]]:sreg_64_xexec = V_ADD_CO_U32_e64 [[COPY5]], [[COPY7]], 0, implicit $exec
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>), align 1, addrspace 8)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:sgpr_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE]], [[COPY6]], 0, 0, 0, implicit $exec :: (dereferenceable store (<2 x s16>) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 4096
-  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
 ; An add of the offset is necessary, with a waterfall loop. Make sure the add is done outside of the waterfall loop.
-define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_offset_add_5000(<4 x i32> %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_offset_add_5000(ptr addrspace(8) %rsrc, float %val, i32 %voffset, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr_soffset_offset_add_5000
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -758,10 +758,10 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:vgpr_32 = COPY $vgpr5
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:sreg_32 = COPY $sgpr2
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:vgpr_32 = COPY [[S_MOV_B32_]]
   ; CHECK-NEXT:   [[V_ADD_CO_U32_e64_:%[0-9]+]]:vgpr_32, dead [[V_ADD_CO_U32_e64_1:%[0-9]+]]:sreg_64_xexec = V_ADD_CO_U32_e64 [[COPY5]], [[COPY7]], 0, implicit $exec
@@ -787,7 +787,7 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE1]], [[COPY6]], 904, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[V_ADD_CO_U32_e64_]], [[REG_SEQUENCE1]], [[COPY6]], 904, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -799,12 +799,12 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__vgpr_voffset__sgpr
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
   %voffset.add = add i32 %voffset, 5000
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 %voffset.add, i32 %soffset, i32 0)
   ret void
 }
 
 ; An add of the offset is necessary, with a waterfall loop. Make sure the add is done outside of the waterfall loop.
-define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr_soffset_offset(<4 x i32> %rsrc, float %val, i32 inreg %soffset) {
+define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr_soffset_offset(ptr addrspace(8) %rsrc, float %val, i32 inreg %soffset) {
   ; CHECK-LABEL: name: raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr_soffset_offset
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -814,9 +814,9 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vgpr_32 = COPY $vgpr3
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vgpr_32 = COPY $vgpr4
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:sreg_32 = COPY $sgpr2
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_128 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1, [[COPY2]], %subreg.sub2, [[COPY3]], %subreg.sub3
   ; CHECK-NEXT:   [[S_MOV_B32_:%[0-9]+]]:sreg_32 = S_MOV_B32 4096
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:vgpr_32 = COPY [[S_MOV_B32_]]
   ; CHECK-NEXT:   [[S_MOV_B64_:%[0-9]+]]:sreg_64_xexec = S_MOV_B64 $exec
@@ -841,7 +841,7 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY6]], [[REG_SEQUENCE1]], [[COPY5]], 904, 0, 0, implicit $exec :: (dereferenceable store (s32), align 1, addrspace 8)
+  ; CHECK-NEXT:   BUFFER_STORE_DWORD_OFFEN_exact [[COPY4]], [[COPY6]], [[REG_SEQUENCE1]], [[COPY5]], 904, 0, 0, implicit $exec :: (dereferenceable store (s32) into %ir.rsrc, align 1, addrspace 8)
   ; CHECK-NEXT:   $exec = S_XOR_B64_term $exec, [[S_AND_SAVEEXEC_B64_]], implicit-def $scc
   ; CHECK-NEXT:   SI_WATERFALL_LOOP %bb.2, implicit $exec
   ; CHECK-NEXT: {{  $}}
@@ -852,18 +852,18 @@ define amdgpu_ps void @raw_buffer_store__vgpr_rsrc__vgpr_val__5000_voffset__sgpr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   S_ENDPGM 0
-  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, <4 x i32> %rsrc, i32 5000, i32 %soffset, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.f32(float %val, ptr addrspace(8) %rsrc, i32 5000, i32 %soffset, i32 0)
   ret void
 }
 
-declare void @llvm.amdgcn.raw.buffer.store.i8(i8, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.i16(i16, <4 x i32>, i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.i8(i8, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.i16(i16, ptr addrspace(8), i32, i32, i32 immarg)
 
-declare void @llvm.amdgcn.raw.buffer.store.f16(half, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half>, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half>, <4 x i32>, i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.f16(half, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.v2f16(<2 x half>, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.v4f16(<4 x half>, ptr addrspace(8), i32, i32, i32 immarg)
 
-declare void @llvm.amdgcn.raw.buffer.store.f32(float, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.v2f32(<2 x float>, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.v3f32(<3 x float>, <4 x i32>, i32, i32, i32 immarg)
-declare void @llvm.amdgcn.raw.buffer.store.v4f32(<4 x float>, <4 x i32>, i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.f32(float, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.v2f32(<2 x float>, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.v3f32(<3 x float>, ptr addrspace(8), i32, i32, i32 immarg)
+declare void @llvm.amdgcn.raw.buffer.store.v4f32(<4 x float>, ptr addrspace(8), i32, i32, i32 immarg)

@@ -4,7 +4,7 @@
 ;RUN: llc < %s -march=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck -check-prefixes=GFX10 %s
 ;RUN: llc < %s -march=amdgcn -mcpu=gfx1100 -verify-machineinstrs | FileCheck -check-prefixes=GFX11 %s
 
-define amdgpu_ps void @tbuffer_store(<4 x i32> inreg, <4 x float>, <4 x float>, <4 x float>) {
+define amdgpu_ps void @tbuffer_store(ptr addrspace(8) inreg, <4 x float>, <4 x float>, <4 x float>) {
 ; VERDE-LABEL: tbuffer_store:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    v_mov_b32_e32 v12, 0
@@ -46,14 +46,14 @@ main_body:
   %in1 = bitcast <4 x float> %1 to <4 x i32>
   %in2 = bitcast <4 x float> %2 to <4 x i32>
   %in3 = bitcast <4 x float> %3 to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 0, i32 0, i32 0, i32 44, i32 0)
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in2, <4 x i32> %0, i32 0, i32 0, i32 0, i32 61, i32 1)
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in3, <4 x i32> %0, i32 0, i32 0, i32 0, i32 78, i32 2)
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %3, <4 x i32> %0, i32 0, i32 0, i32 0, i32 78, i32 5)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 44, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in2, ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 61, i32 1)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in3, ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 78, i32 2)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %3, ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 78, i32 5)
   ret void
 }
 
-define amdgpu_ps void @tbuffer_store_immoffs(<4 x i32> inreg, <4 x float>) {
+define amdgpu_ps void @tbuffer_store_immoffs(ptr addrspace(8) inreg, <4 x float>) {
 ; VERDE-LABEL: tbuffer_store_immoffs:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    v_mov_b32_e32 v4, 0
@@ -80,11 +80,11 @@ define amdgpu_ps void @tbuffer_store_immoffs(<4 x i32> inreg, <4 x float>) {
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %1 to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 0, i32 42, i32 0, i32 117, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 0, i32 42, i32 0, i32 117, i32 0)
   ret void
 }
 
-define amdgpu_ps void @tbuffer_store_scalar_and_imm_offs(<4 x i32> inreg, <4 x float> %vdata, i32 inreg %soffset) {
+define amdgpu_ps void @tbuffer_store_scalar_and_imm_offs(ptr addrspace(8) inreg, <4 x float> %vdata, i32 inreg %soffset) {
 ; VERDE-LABEL: tbuffer_store_scalar_and_imm_offs:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    v_mov_b32_e32 v4, 0
@@ -111,11 +111,11 @@ define amdgpu_ps void @tbuffer_store_scalar_and_imm_offs(<4 x i32> inreg, <4 x f
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %vdata to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 0, i32 42, i32 %soffset, i32 117, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 0, i32 42, i32 %soffset, i32 117, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_idx(<4 x i32> inreg, <4 x float> %vdata, i32 %vindex) {
+define amdgpu_ps void @buffer_store_idx(ptr addrspace(8) inreg, <4 x float> %vdata, i32 %vindex) {
 ; VERDE-LABEL: buffer_store_idx:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    tbuffer_store_format_xyzw v[0:3], v4, s[0:3], 0 format:[BUF_DATA_FORMAT_RESERVED_15,BUF_NUM_FORMAT_USCALED] idxen
@@ -138,11 +138,11 @@ define amdgpu_ps void @buffer_store_idx(<4 x i32> inreg, <4 x float> %vdata, i32
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %vdata to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 %vindex, i32 0, i32 0, i32 47, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 %vindex, i32 0, i32 0, i32 47, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_ofs(<4 x i32> inreg, <4 x float> %vdata, i32 %voffset) {
+define amdgpu_ps void @buffer_store_ofs(ptr addrspace(8) inreg, <4 x float> %vdata, i32 %voffset) {
 ; VERDE-LABEL: buffer_store_ofs:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    s_mov_b32 s4, 0
@@ -177,11 +177,11 @@ define amdgpu_ps void @buffer_store_ofs(<4 x i32> inreg, <4 x float> %vdata, i32
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %vdata to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 0, i32 %voffset, i32 0, i32 115, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 0, i32 %voffset, i32 0, i32 115, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_both(<4 x i32> inreg, <4 x float> %vdata, i32 %vindex, i32 %voffset) {
+define amdgpu_ps void @buffer_store_both(ptr addrspace(8) inreg, <4 x float> %vdata, i32 %vindex, i32 %voffset) {
 ; VERDE-LABEL: buffer_store_both:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    tbuffer_store_format_xyzw v[0:3], v[4:5], s[0:3], 0 format:[BUF_DATA_FORMAT_10_11_11,BUF_NUM_FORMAT_UINT] idxen offen
@@ -204,11 +204,11 @@ define amdgpu_ps void @buffer_store_both(<4 x i32> inreg, <4 x float> %vdata, i3
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %vdata to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 %vindex, i32 %voffset, i32 0, i32 70, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 %vindex, i32 %voffset, i32 0, i32 70, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_wait(<4 x i32> inreg, <4 x float> %vdata, i32 %vindex.1, i32 %vindex.2, i32 %vindex.3) {
+define amdgpu_ps void @buffer_store_wait(ptr addrspace(8) inreg, <4 x float> %vdata, i32 %vindex.1, i32 %vindex.2, i32 %vindex.3) {
 ; VERDE-LABEL: buffer_store_wait:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    tbuffer_store_format_xyzw v[0:3], v4, s[0:3], 0 format:[BUF_DATA_FORMAT_RESERVED_15,BUF_NUM_FORMAT_SSCALED] idxen
@@ -244,14 +244,14 @@ define amdgpu_ps void @buffer_store_wait(<4 x i32> inreg, <4 x float> %vdata, i3
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %in1 = bitcast <4 x float> %vdata to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, <4 x i32> %0, i32 %vindex.1, i32 0, i32 0, i32 63, i32 0)
-  %data = call <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %0, i32 %vindex.2, i32 0, i1 0, i1 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %in1, ptr addrspace(8) %0, i32 %vindex.1, i32 0, i32 0, i32 63, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 %vindex.2, i32 0, i1 0, i1 0)
   %data.i = bitcast <4 x float> %data to <4 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %data.i, <4 x i32> %0, i32 %vindex.3, i32 0, i32 0, i32 46, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32> %data.i, ptr addrspace(8) %0, i32 %vindex.3, i32 0, i32 0, i32 46, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_x1(<4 x i32> inreg %rsrc, float %data, i32 %vindex) {
+define amdgpu_ps void @buffer_store_x1(ptr addrspace(8) inreg %rsrc, float %data, i32 %vindex) {
 ; VERDE-LABEL: buffer_store_x1:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    tbuffer_store_format_x v0, v1, s[0:3], 0 format:[BUF_DATA_FORMAT_32_32_32,BUF_NUM_FORMAT_FLOAT] idxen
@@ -274,11 +274,11 @@ define amdgpu_ps void @buffer_store_x1(<4 x i32> inreg %rsrc, float %data, i32 %
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %data.i = bitcast float %data to i32
-  call void @llvm.amdgcn.struct.tbuffer.store.i32(i32 %data.i, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 125, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.i32(i32 %data.i, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 125, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_x2(<4 x i32> inreg %rsrc, <2 x float> %data, i32 %vindex) {
+define amdgpu_ps void @buffer_store_x2(ptr addrspace(8) inreg %rsrc, <2 x float> %data, i32 %vindex) {
 ; VERDE-LABEL: buffer_store_x2:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    tbuffer_store_format_xy v[0:1], v2, s[0:3], 0 format:[BUF_NUM_FORMAT_USCALED] idxen
@@ -301,11 +301,11 @@ define amdgpu_ps void @buffer_store_x2(<4 x i32> inreg %rsrc, <2 x float> %data,
 ; GFX11-NEXT:    s_endpgm
 main_body:
   %data.i = bitcast <2 x float> %data to <2 x i32>
-  call void @llvm.amdgcn.struct.tbuffer.store.v2i32(<2 x i32> %data.i, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v2i32(<2 x i32> %data.i, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_voffset_large_12bit(<4 x i32> inreg %rsrc, <4 x float> %data) {
+define amdgpu_ps void @buffer_store_voffset_large_12bit(ptr addrspace(8) inreg %rsrc, <4 x float> %data) {
 ; VERDE-LABEL: buffer_store_voffset_large_12bit:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    v_mov_b32_e32 v4, 0
@@ -331,11 +331,11 @@ define amdgpu_ps void @buffer_store_voffset_large_12bit(<4 x i32> inreg %rsrc, <
 ; GFX11-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, <4 x i32> %rsrc, i32 0, i32 4092, i32 0, i32 63, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, ptr addrspace(8) %rsrc, i32 0, i32 4092, i32 0, i32 63, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_voffset_large_13bit(<4 x i32> inreg %rsrc, <4 x float> %data) {
+define amdgpu_ps void @buffer_store_voffset_large_13bit(ptr addrspace(8) inreg %rsrc, <4 x float> %data) {
 ; VERDE-LABEL: buffer_store_voffset_large_13bit:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    s_mov_b32 s4, 0
@@ -369,11 +369,11 @@ define amdgpu_ps void @buffer_store_voffset_large_13bit(<4 x i32> inreg %rsrc, <
 ; GFX11-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, <4 x i32> %rsrc, i32 0, i32 8188, i32 0, i32 63, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, ptr addrspace(8) %rsrc, i32 0, i32 8188, i32 0, i32 63, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_voffset_large_16bit(<4 x i32> inreg %rsrc, <4 x float> %data) {
+define amdgpu_ps void @buffer_store_voffset_large_16bit(ptr addrspace(8) inreg %rsrc, <4 x float> %data) {
 ; VERDE-LABEL: buffer_store_voffset_large_16bit:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    s_mov_b32 s4, 0
@@ -407,11 +407,11 @@ define amdgpu_ps void @buffer_store_voffset_large_16bit(<4 x i32> inreg %rsrc, <
 ; GFX11-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, <4 x i32> %rsrc, i32 0, i32 65532, i32 0, i32 63, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, ptr addrspace(8) %rsrc, i32 0, i32 65532, i32 0, i32 63, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_voffset_large_23bit(<4 x i32> inreg %rsrc, <4 x float> %data) {
+define amdgpu_ps void @buffer_store_voffset_large_23bit(ptr addrspace(8) inreg %rsrc, <4 x float> %data) {
 ; VERDE-LABEL: buffer_store_voffset_large_23bit:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    s_mov_b32 s4, 0
@@ -445,11 +445,11 @@ define amdgpu_ps void @buffer_store_voffset_large_23bit(<4 x i32> inreg %rsrc, <
 ; GFX11-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, <4 x i32> %rsrc, i32 0, i32 8388604, i32 0, i32 63, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, ptr addrspace(8) %rsrc, i32 0, i32 8388604, i32 0, i32 63, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_store_voffset_large_24bit(<4 x i32> inreg %rsrc, <4 x float> %data) {
+define amdgpu_ps void @buffer_store_voffset_large_24bit(ptr addrspace(8) inreg %rsrc, <4 x float> %data) {
 ; VERDE-LABEL: buffer_store_voffset_large_24bit:
 ; VERDE:       ; %bb.0: ; %main_body
 ; VERDE-NEXT:    s_mov_b32 s4, 0
@@ -483,15 +483,15 @@ define amdgpu_ps void @buffer_store_voffset_large_24bit(<4 x i32> inreg %rsrc, <
 ; GFX11-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, <4 x i32> %rsrc, i32 0, i32 16777212, i32 0, i32 63, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float> %data, ptr addrspace(8) %rsrc, i32 0, i32 16777212, i32 0, i32 63, i32 0)
   ret void
 }
 
-declare void @llvm.amdgcn.struct.tbuffer.store.i32(i32, <4 x i32>, i32, i32, i32, i32, i32) #0
-declare void @llvm.amdgcn.struct.tbuffer.store.v2i32(<2 x i32>, <4 x i32>, i32, i32, i32, i32, i32) #0
-declare void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32>, <4 x i32>, i32, i32, i32, i32, i32) #0
-declare void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float>, <4 x i32>, i32, i32, i32, i32, i32) #0
-declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32>, i32, i32, i1, i1) #1
+declare void @llvm.amdgcn.struct.tbuffer.store.i32(i32, ptr addrspace(8), i32, i32, i32, i32, i32) #0
+declare void @llvm.amdgcn.struct.tbuffer.store.v2i32(<2 x i32>, ptr addrspace(8), i32, i32, i32, i32, i32) #0
+declare void @llvm.amdgcn.struct.tbuffer.store.v4i32(<4 x i32>, ptr addrspace(8), i32, i32, i32, i32, i32) #0
+declare void @llvm.amdgcn.struct.tbuffer.store.v4f32(<4 x float>, ptr addrspace(8), i32, i32, i32, i32, i32) #0
+declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(ptr addrspace(8), i32, i32, i1, i1) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readonly }

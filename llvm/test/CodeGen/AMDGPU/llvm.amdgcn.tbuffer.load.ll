@@ -7,12 +7,12 @@
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_10_11_11,BUF_NUM_FORMAT_SNORM] slc
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_10_11_11,BUF_NUM_FORMAT_SNORM]
 ; GCN: s_waitcnt
-define amdgpu_vs {<4 x float>, <4 x float>, <4 x float>, <4 x float>} @tbuffer_load(<4 x i32> inreg) {
+define amdgpu_vs {<4 x float>, <4 x float>, <4 x float>, <4 x float>} @tbuffer_load(ptr addrspace(8) inreg) {
 main_body:
-    %vdata     = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
-    %vdata_glc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0, i32 15, i32 3, i1 1, i1 0)
-    %vdata_slc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0, i32 6, i32 1, i1 0, i1 1)
-    %vdata_f32 = call <4 x float> @llvm.amdgcn.tbuffer.load.v4f32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0, i32 6, i32 1, i1 0, i1 0)
+    %vdata     = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
+    %vdata_glc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 0, i32 15, i32 3, i1 1, i1 0)
+    %vdata_slc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 0, i32 6, i32 1, i1 0, i1 1)
+    %vdata_f32 = call <4 x float> @llvm.amdgcn.tbuffer.load.v4f32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 0, i32 6, i32 1, i1 0, i1 0)
     %vdata.f     = bitcast <4 x i32> %vdata to <4 x float>
     %vdata_glc.f = bitcast <4 x i32> %vdata_glc to <4 x float>
     %vdata_slc.f = bitcast <4 x i32> %vdata_slc to <4 x float>
@@ -25,9 +25,9 @@ main_body:
 
 ; GCN-LABEL: {{^}}tbuffer_load_immoffs:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_UINT] offset:42
-define amdgpu_vs <4 x float> @tbuffer_load_immoffs(<4 x i32> inreg) {
+define amdgpu_vs <4 x float> @tbuffer_load_immoffs(ptr addrspace(8) inreg) {
 main_body:
-    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 42, i32 14, i32 4, i1 0, i1 0)
+    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 42, i32 14, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <4 x i32> %vdata to <4 x float>
     ret <4 x float> %vdata.f
 }
@@ -37,10 +37,10 @@ main_body:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, {{s[0-9]+}} format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_SSCALED] offset:73
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, {{s[0-9]+}} format:[BUF_DATA_FORMAT_32_32_32,BUF_NUM_FORMAT_UINT] offset:1
 ; GCN: s_waitcnt
-define amdgpu_vs {<4 x float>, <4 x float>, <4 x float>} @tbuffer_load_immoffs_large(<4 x i32> inreg, i32 inreg %soffs) {
-    %vdata     = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 61, i32 4095, i32 15, i32 2, i1 0, i1 0)
-    %vdata_glc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 %soffs, i32 73, i32 14, i32 3, i1 0, i1 0)
-    %vdata_slc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 %soffs, i32 1, i32 13, i32 4, i1 0, i1 0)
+define amdgpu_vs {<4 x float>, <4 x float>, <4 x float>} @tbuffer_load_immoffs_large(ptr addrspace(8) inreg, i32 inreg %soffs) {
+    %vdata     = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 61, i32 4095, i32 15, i32 2, i1 0, i1 0)
+    %vdata_glc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 %soffs, i32 73, i32 14, i32 3, i1 0, i1 0)
+    %vdata_slc = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 0, i32 %soffs, i32 1, i32 13, i32 4, i1 0, i1 0)
     %vdata.f     = bitcast <4 x i32> %vdata to <4 x float>
     %vdata_glc.f = bitcast <4 x i32> %vdata_glc to <4 x float>
     %vdata_slc.f = bitcast <4 x i32> %vdata_slc to <4 x float>
@@ -52,36 +52,36 @@ define amdgpu_vs {<4 x float>, <4 x float>, <4 x float>} @tbuffer_load_immoffs_l
 
 ; GCN-LABEL: {{^}}tbuffer_load_idx:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_UINT] idxen
-define amdgpu_vs <4 x float> @tbuffer_load_idx(<4 x i32> inreg, i32 %vindex) {
+define amdgpu_vs <4 x float> @tbuffer_load_idx(ptr addrspace(8) inreg, i32 %vindex) {
 main_body:
-    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 %vindex, i32 0, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
+    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 %vindex, i32 0, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <4 x i32> %vdata to <4 x float>
     ret <4 x float> %vdata.f
 }
 
 ; GCN-LABEL: {{^}}tbuffer_load_ofs:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_UINT] offen
-define amdgpu_vs <4 x float> @tbuffer_load_ofs(<4 x i32> inreg, i32 %voffs) {
+define amdgpu_vs <4 x float> @tbuffer_load_ofs(ptr addrspace(8) inreg, i32 %voffs) {
 main_body:
-    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 %voffs, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
+    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 %voffs, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <4 x i32> %vdata to <4 x float>
     ret <4 x float> %vdata.f
 }
 
 ; GCN-LABEL: {{^}}tbuffer_load_ofs_imm:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_UINT] offen offset:52
-define amdgpu_vs <4 x float> @tbuffer_load_ofs_imm(<4 x i32> inreg, i32 %voffs) {
+define amdgpu_vs <4 x float> @tbuffer_load_ofs_imm(ptr addrspace(8) inreg, i32 %voffs) {
 main_body:
-    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 0, i32 %voffs, i32 0, i32 52, i32 14, i32 4, i1 0, i1 0)
+    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 0, i32 %voffs, i32 0, i32 52, i32 14, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <4 x i32> %vdata to <4 x float>
     ret <4 x float> %vdata.f
 }
 
 ; GCN-LABEL: {{^}}tbuffer_load_both:
 ; GCN: tbuffer_load_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32_32,BUF_NUM_FORMAT_UINT] idxen offen
-define amdgpu_vs <4 x float> @tbuffer_load_both(<4 x i32> inreg, i32 %vindex, i32 %voffs) {
+define amdgpu_vs <4 x float> @tbuffer_load_both(ptr addrspace(8) inreg, i32 %vindex, i32 %voffs) {
 main_body:
-    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32> %0, i32 %vindex, i32 %voffs, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
+    %vdata   = call <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8) %0, i32 %vindex, i32 %voffs, i32 0, i32 0, i32 14, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <4 x i32> %vdata to <4 x float>
     ret <4 x float> %vdata.f
 }
@@ -89,21 +89,21 @@ main_body:
 
 ; GCN-LABEL: {{^}}buffer_load_xy:
 ; GCN: tbuffer_load_format_xy {{v\[[0-9]+:[0-9]+\]}}, off, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32,BUF_NUM_FORMAT_UINT]
-define amdgpu_vs <2 x float> @buffer_load_xy(<4 x i32> inreg %rsrc) {
-    %vdata = call <2 x i32> @llvm.amdgcn.tbuffer.load.v2i32(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0, i32 13, i32 4, i1 0, i1 0)
+define amdgpu_vs <2 x float> @buffer_load_xy(ptr addrspace(8) inreg %rsrc) {
+    %vdata = call <2 x i32> @llvm.amdgcn.tbuffer.load.v2i32(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0, i32 13, i32 4, i1 0, i1 0)
     %vdata.f = bitcast <2 x i32> %vdata to <2 x float>
     ret <2 x float> %vdata.f
 }
 
 ; GCN-LABEL: {{^}}buffer_load_x:
 ; GCN: tbuffer_load_format_x {{v[0-9]+}}, off, {{s\[[0-9]+:[0-9]+\]}}, 0 format:[BUF_DATA_FORMAT_32_32_32,BUF_NUM_FORMAT_UINT]
-define amdgpu_vs float @buffer_load_x(<4 x i32> inreg %rsrc) {
-    %vdata = call i32 @llvm.amdgcn.tbuffer.load.i32(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0, i32 13, i32 4, i1 0, i1 0)
+define amdgpu_vs float @buffer_load_x(ptr addrspace(8) inreg %rsrc) {
+    %vdata = call i32 @llvm.amdgcn.tbuffer.load.i32(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0, i32 13, i32 4, i1 0, i1 0)
     %vdata.f = bitcast i32 %vdata to float
     ret float %vdata.f
 }
 
-declare i32 @llvm.amdgcn.tbuffer.load.i32(<4 x i32>, i32, i32, i32, i32, i32, i32, i1, i1)
-declare <2 x i32> @llvm.amdgcn.tbuffer.load.v2i32(<4 x i32>, i32, i32, i32, i32, i32, i32, i1, i1)
-declare <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(<4 x i32>, i32, i32, i32, i32, i32, i32, i1, i1)
-declare <4 x float> @llvm.amdgcn.tbuffer.load.v4f32(<4 x i32>, i32, i32, i32, i32, i32, i32, i1, i1)
+declare i32 @llvm.amdgcn.tbuffer.load.i32(ptr addrspace(8), i32, i32, i32, i32, i32, i32, i1, i1)
+declare <2 x i32> @llvm.amdgcn.tbuffer.load.v2i32(ptr addrspace(8), i32, i32, i32, i32, i32, i32, i1, i1)
+declare <4 x i32> @llvm.amdgcn.tbuffer.load.v4i32(ptr addrspace(8), i32, i32, i32, i32, i32, i32, i1, i1)
+declare <4 x float> @llvm.amdgcn.tbuffer.load.v4f32(ptr addrspace(8), i32, i32, i32, i32, i32, i32, i1, i1)

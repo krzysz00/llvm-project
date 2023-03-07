@@ -6,7 +6,7 @@
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck %s -check-prefixes=GFX678910,GFX78910,GFX8910,GFX910,GFX10
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1100 -amdgpu-enable-vopd=0 -verify-machineinstrs | FileCheck %s -check-prefixes=GFX11
 
-define amdgpu_ps void @s_buffer_load_imm(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_load_imm(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dword s0, s[0:3], 0x1
@@ -31,13 +31,13 @@ define amdgpu_ps void @s_buffer_load_imm(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v0, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 4, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 4, i32 0)
   %bitcast = bitcast i32 %load to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %bitcast, float undef, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps void @s_buffer_load_index(<4 x i32> inreg %desc, i32 inreg %index) {
+define amdgpu_ps void @s_buffer_load_index(ptr addrspace(8) inreg %desc, i32 inreg %index) {
 ; GFX678910-LABEL: s_buffer_load_index:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    s_buffer_load_dword s0, s[0:3], s4
@@ -54,13 +54,13 @@ define amdgpu_ps void @s_buffer_load_index(<4 x i32> inreg %desc, i32 inreg %ind
 ; GFX11-NEXT:    exp mrt0 v0, v0, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast i32 %load to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %bitcast, float undef, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps void @s_buffer_load_index_divergent(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_load_index_divergent(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX678910-LABEL: s_buffer_load_index_divergent:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    buffer_load_dword v0, v0, s[0:3], 0 offen
@@ -75,13 +75,13 @@ define amdgpu_ps void @s_buffer_load_index_divergent(<4 x i32> inreg %desc, i32 
 ; GFX11-NEXT:    exp mrt0 v0, v0, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast i32 %load to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %bitcast, float undef, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx2_imm(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_loadx2_imm(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_loadx2_imm:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dwordx2 s[0:1], s[0:3], 0x10
@@ -109,7 +109,7 @@ define amdgpu_ps void @s_buffer_loadx2_imm(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v1, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(<4 x i32> %desc, i32 64, i32 0)
+  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(ptr addrspace(8) %desc, i32 64, i32 0)
   %bitcast = bitcast <2 x i32> %load to <2 x float>
   %x = extractelement <2 x float> %bitcast, i32 0
   %y = extractelement <2 x float> %bitcast, i32 1
@@ -117,7 +117,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx2_index(<4 x i32> inreg %desc, i32 inreg %index) {
+define amdgpu_ps void @s_buffer_loadx2_index(ptr addrspace(8) inreg %desc, i32 inreg %index) {
 ; GFX678910-LABEL: s_buffer_loadx2_index:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    s_buffer_load_dwordx2 s[0:1], s[0:3], s4
@@ -136,7 +136,7 @@ define amdgpu_ps void @s_buffer_loadx2_index(<4 x i32> inreg %desc, i32 inreg %i
 ; GFX11-NEXT:    exp mrt0 v0, v1, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <2 x i32> %load to <2 x float>
   %x = extractelement <2 x float> %bitcast, i32 0
   %y = extractelement <2 x float> %bitcast, i32 1
@@ -144,7 +144,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx2_index_divergent(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_loadx2_index_divergent(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX678910-LABEL: s_buffer_loadx2_index_divergent:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    buffer_load_dwordx2 v[0:1], v0, s[0:3], 0 offen
@@ -159,7 +159,7 @@ define amdgpu_ps void @s_buffer_loadx2_index_divergent(<4 x i32> inreg %desc, i3
 ; GFX11-NEXT:    exp mrt0 v0, v1, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <2 x i32> %load to <2 x float>
   %x = extractelement <2 x float> %bitcast, i32 0
   %y = extractelement <2 x float> %bitcast, i32 1
@@ -167,7 +167,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx3_imm(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_loadx3_imm(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_loadx3_imm:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dwordx4 s[0:3], s[0:3], 0x10
@@ -198,7 +198,7 @@ define amdgpu_ps void @s_buffer_loadx3_imm(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(<4 x i32> %desc, i32 64, i32 0)
+  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(ptr addrspace(8) %desc, i32 64, i32 0)
   %bitcast = bitcast <3 x i32> %load to <3 x float>
   %x = extractelement <3 x float> %bitcast, i32 0
   %y = extractelement <3 x float> %bitcast, i32 1
@@ -207,7 +207,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx3_index(<4 x i32> inreg %desc, i32 inreg %index) {
+define amdgpu_ps void @s_buffer_loadx3_index(ptr addrspace(8) inreg %desc, i32 inreg %index) {
 ; GFX678910-LABEL: s_buffer_loadx3_index:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    s_buffer_load_dwordx4 s[0:3], s[0:3], s4
@@ -228,7 +228,7 @@ define amdgpu_ps void @s_buffer_loadx3_index(<4 x i32> inreg %desc, i32 inreg %i
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <3 x i32> %load to <3 x float>
   %x = extractelement <3 x float> %bitcast, i32 0
   %y = extractelement <3 x float> %bitcast, i32 1
@@ -237,7 +237,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx3_index_divergent(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_loadx3_index_divergent(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX6-LABEL: s_buffer_loadx3_index_divergent:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    buffer_load_dwordx4 v[0:3], v0, s[0:3], 0 offen
@@ -259,7 +259,7 @@ define amdgpu_ps void @s_buffer_loadx3_index_divergent(<4 x i32> inreg %desc, i3
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <3 x i32> %load to <3 x float>
   %x = extractelement <3 x float> %bitcast, i32 0
   %y = extractelement <3 x float> %bitcast, i32 1
@@ -268,7 +268,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx4_imm(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_loadx4_imm(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_loadx4_imm:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dwordx4 s[0:3], s[0:3], 0x32
@@ -302,7 +302,7 @@ define amdgpu_ps void @s_buffer_loadx4_imm(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v3 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(<4 x i32> %desc, i32 200, i32 0)
+  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(ptr addrspace(8) %desc, i32 200, i32 0)
   %bitcast = bitcast <4 x i32> %load to <4 x float>
   %x = extractelement <4 x float> %bitcast, i32 0
   %y = extractelement <4 x float> %bitcast, i32 1
@@ -312,7 +312,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx4_index(<4 x i32> inreg %desc, i32 inreg %index) {
+define amdgpu_ps void @s_buffer_loadx4_index(ptr addrspace(8) inreg %desc, i32 inreg %index) {
 ; GFX678910-LABEL: s_buffer_loadx4_index:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    s_buffer_load_dwordx4 s[0:3], s[0:3], s4
@@ -335,7 +335,7 @@ define amdgpu_ps void @s_buffer_loadx4_index(<4 x i32> inreg %desc, i32 inreg %i
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v3 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <4 x i32> %load to <4 x float>
   %x = extractelement <4 x float> %bitcast, i32 0
   %y = extractelement <4 x float> %bitcast, i32 1
@@ -345,7 +345,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_loadx4_index_divergent(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_loadx4_index_divergent(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX678910-LABEL: s_buffer_loadx4_index_divergent:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    buffer_load_dwordx4 v[0:3], v0, s[0:3], 0 offen
@@ -360,7 +360,7 @@ define amdgpu_ps void @s_buffer_loadx4_index_divergent(<4 x i32> inreg %desc, i3
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v3 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(<4 x i32> %desc, i32 %index, i32 0)
+  %load = call <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(ptr addrspace(8) %desc, i32 %index, i32 0)
   %bitcast = bitcast <4 x i32> %load to <4 x float>
   %x = extractelement <4 x float> %bitcast, i32 0
   %y = extractelement <4 x float> %bitcast, i32 1
@@ -370,7 +370,7 @@ main_body:
   ret void
 }
 
-define amdgpu_ps void @s_buffer_load_imm_mergex2(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_load_imm_mergex2(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm_mergex2:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dwordx2 s[0:1], s[0:3], 0x1
@@ -398,15 +398,15 @@ define amdgpu_ps void @s_buffer_load_imm_mergex2(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v1, v0, v0 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load0 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 4, i32 0)
-  %load1 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 8, i32 0)
+  %load0 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 4, i32 0)
+  %load1 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 8, i32 0)
   %x = bitcast i32 %load0 to float
   %y = bitcast i32 %load1 to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %x, float %y, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps void @s_buffer_load_imm_mergex4(<4 x i32> inreg %desc) {
+define amdgpu_ps void @s_buffer_load_imm_mergex4(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm_mergex4:
 ; GFX67:       ; %bb.0: ; %main_body
 ; GFX67-NEXT:    s_buffer_load_dwordx4 s[0:3], s[0:3], 0x2
@@ -440,10 +440,10 @@ define amdgpu_ps void @s_buffer_load_imm_mergex4(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    exp mrt0 v0, v1, v2, v3 done
 ; GFX11-NEXT:    s_endpgm
 main_body:
-  %load0 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 8, i32 0)
-  %load1 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 12, i32 0)
-  %load2 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 16, i32 0)
-  %load3 = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 20, i32 0)
+  %load0 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 8, i32 0)
+  %load1 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 12, i32 0)
+  %load2 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 16, i32 0)
+  %load3 = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 20, i32 0)
   %x = bitcast i32 %load0 to float
   %y = bitcast i32 %load1 to float
   %z = bitcast i32 %load2 to float
@@ -454,7 +454,7 @@ main_body:
 
 @gv = external addrspace(1) global i32
 
-define amdgpu_ps void @s_buffer_load_index_across_bb(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_load_index_across_bb(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX6-LABEL: s_buffer_load_index_across_bb:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_getpc_b64 s[4:5]
@@ -561,13 +561,13 @@ main_body:
 
 bb1:                                              ; preds = %main_body
   %tmp1 = or i32 %tmp, 8
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 %tmp1, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 %tmp1, i32 0)
   %bitcast = bitcast i32 %load to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %bitcast, float undef, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps void @s_buffer_load_index_across_bb_merged(<4 x i32> inreg %desc, i32 %index) {
+define amdgpu_ps void @s_buffer_load_index_across_bb_merged(ptr addrspace(8) inreg %desc, i32 %index) {
 ; GFX678910-LABEL: s_buffer_load_index_across_bb_merged:
 ; GFX678910:       ; %bb.0: ; %main_body
 ; GFX678910-NEXT:    v_lshlrev_b32_e32 v0, 4, v0
@@ -589,16 +589,16 @@ main_body:
 
 bb1:                                              ; preds = %main_body
   %tmp1 = or i32 %tmp, 8
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 %tmp1, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 %tmp1, i32 0)
   %tmp2 = or i32 %tmp1, 4
-  %load2 = tail call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 %tmp2, i32 0)
+  %load2 = tail call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 %tmp2, i32 0)
   %bitcast = bitcast i32 %load to float
   %bitcast2 = bitcast i32 %load2 to float
   call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %bitcast, float %bitcast2, float undef, float undef, i1 true, i1 true)
   ret void
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_neg1(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_neg1(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_neg1:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, -1
@@ -620,11 +620,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_neg1(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 -1, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 -1, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_neg4(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_neg4(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_neg4:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, -4
@@ -652,11 +652,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_neg4(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 -4, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 -4, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_neg8(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_neg8(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_neg8:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, -8
@@ -684,11 +684,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_neg8(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 -8, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 -8, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit31(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit31(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit31:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_brev_b32 s4, 1
@@ -716,11 +716,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit31(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 -2147483648, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 -2147483648, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit30(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit30(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit30:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 2.0
@@ -748,11 +748,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit30(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1073741824, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1073741824, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit29(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit29(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit29:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_brev_b32 s4, 4
@@ -780,11 +780,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit29(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 536870912, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 536870912, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit21(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit21(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit21:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 0x200000
@@ -812,11 +812,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit21(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 2097152, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 2097152, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit20(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit20(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit20:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 0x100000
@@ -844,11 +844,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit20(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1048576, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1048576, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_neg_bit20(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_neg_bit20(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_neg_bit20:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 0xfff00000
@@ -876,11 +876,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_neg_bit20(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32  -1048576, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32  -1048576, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_bit19(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_bit19(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_bit19:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 0x80000
@@ -906,11 +906,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_bit19(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x80000
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 524288, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 524288, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_neg_bit19(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_neg_bit19(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_neg_bit19:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_mov_b32 s4, 0xfff80000
@@ -938,11 +938,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_neg_bit19(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], s4
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 -524288, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 -524288, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_255(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_255(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_255:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_movk_i32 s4, 0xff
@@ -969,11 +969,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_255(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0xff
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 255, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 255, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_256(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_256(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm_256:
 ; GFX67:       ; %bb.0:
 ; GFX67-NEXT:    s_buffer_load_dword s0, s[0:3], 0x40
@@ -991,11 +991,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_256(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x100
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 256, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 256, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1016(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1016(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm_1016:
 ; GFX67:       ; %bb.0:
 ; GFX67-NEXT:    s_buffer_load_dword s0, s[0:3], 0xfe
@@ -1013,11 +1013,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_1016(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x3f8
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1016, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1016, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1020(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1020(ptr addrspace(8) inreg %desc) {
 ; GFX67-LABEL: s_buffer_load_imm_1020:
 ; GFX67:       ; %bb.0:
 ; GFX67-NEXT:    s_buffer_load_dword s0, s[0:3], 0xff
@@ -1035,11 +1035,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_1020(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x3fc
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1020, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1020, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1021(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1021(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_1021:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_movk_i32 s4, 0x3fd
@@ -1066,11 +1066,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_1021(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x3fd
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1021, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1021, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1024(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1024(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_1024:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_movk_i32 s4, 0x400
@@ -1096,11 +1096,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_1024(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x400
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1024, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1024, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1025(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1025(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_1025:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_movk_i32 s4, 0x401
@@ -1127,11 +1127,11 @@ define amdgpu_ps i32 @s_buffer_load_imm_1025(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x401
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1025, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1025, i32 0)
   ret i32 %load
 }
 
-define amdgpu_ps i32 @s_buffer_load_imm_1028(<4 x i32> inreg %desc) {
+define amdgpu_ps i32 @s_buffer_load_imm_1028(ptr addrspace(8) inreg %desc) {
 ; GFX6-LABEL: s_buffer_load_imm_1028:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    s_movk_i32 s4, 0x400
@@ -1157,15 +1157,15 @@ define amdgpu_ps i32 @s_buffer_load_imm_1028(<4 x i32> inreg %desc) {
 ; GFX11-NEXT:    s_buffer_load_b32 s0, s[0:3], 0x400
 ; GFX11-NEXT:    s_waitcnt lgkmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 1024, i32 0)
+  %load = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 1024, i32 0)
   ret i32 %load
 }
 
 declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1)
-declare i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32>, i32, i32)
-declare <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(<4 x i32>, i32, i32)
-declare <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(<4 x i32>, i32, i32)
-declare <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(<4 x i32>, i32, i32)
+declare i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8), i32, i32)
+declare <2 x i32> @llvm.amdgcn.s.buffer.load.v2i32(ptr addrspace(8), i32, i32)
+declare <3 x i32> @llvm.amdgcn.s.buffer.load.v3i32(ptr addrspace(8), i32, i32)
+declare <4 x i32> @llvm.amdgcn.s.buffer.load.v4i32(ptr addrspace(8), i32, i32)
 
 ;; NOTE: These prefixes are unused and the list is autogenerated. Do not add tests below this line:
 ; GFX678: {{.*}}

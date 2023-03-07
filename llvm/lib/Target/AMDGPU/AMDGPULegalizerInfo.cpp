@@ -20,6 +20,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
@@ -130,6 +131,20 @@ static LegalizeMutation moreEltsToNext32Bit(unsigned TypeIdx) {
     const int NewNumElts = (32 * NextMul32 + EltSize - 1) / EltSize;
     return std::pair(TypeIdx, LLT::fixed_vector(NewNumElts, EltTy));
   };
+}
+
+static LLT getBufferRsrcScalarType(const LLT Ty) {
+  if (!Ty.isVector())
+    return LLT::scalar(128);
+  const unsigned NumElems = Ty.getElementCount().getFixedValue();
+  return LLT::fixed_vector(NumElems, LLT::scalar(128));
+}
+
+static LLT getBufferRsrcRegisterType(const LLT Ty) {
+  if (!Ty.isVector())
+    return LLT::fixed_vector(4, LLT::scalar(32));
+  const unsigned NumElems = Ty.getElementCount().getFixedValue();
+  return LLT::fixed_vector(NumElems * 4, LLT::scalar(32));
 }
 
 static LLT getBitcastRegisterType(const LLT Ty) {
@@ -250,6 +265,7 @@ static unsigned maxSizeForAddrSpace(const GCNSubtarget &ST, unsigned AS,
   case AMDGPUAS::GLOBAL_ADDRESS:
   case AMDGPUAS::CONSTANT_ADDRESS:
   case AMDGPUAS::CONSTANT_ADDRESS_32BIT:
+  case AMDGPUAS::BUFFER_RESOURCE:
     // Treat constant and global as identical. SMRD loads are sometimes usable for
     // global loads (ideally constant address space should be eliminated)
     // depending on the context. Legality cannot be context dependent, but
@@ -333,6 +349,16 @@ static bool isLoadStoreSizeLegal(const GCNSubtarget &ST,
   return true;
 }
 
+static bool hasBufferRsrcWorkaround(const LLT Ty) {
+  if (Ty.isPointer() && Ty.getAddressSpace() == AMDGPUAS::BUFFER_RESOURCE)
+    return true;
+  if (Ty.isVector()) {
+    const LLT ElemTy = Ty.getElementType();
+    return hasBufferRsrcWorkaround(ElemTy);
+  }
+  return false;
+}
+
 // The current selector can't handle <6 x s16>, <8 x s16>, s96, s128 etc, so
 // workaround this. Eventually it should ignore the type for loads and only care
 // about the size. Return true in cases where we will workaround this for now by
@@ -343,6 +369,9 @@ static bool loadStoreBitcastWorkaround(const LLT Ty) {
 
   const unsigned Size = Ty.getSizeInBits();
   if (Size <= 64)
+    return false;
+  // Address space 8 pointers get their own workaround.
+  if (hasBufferRsrcWorkaround(Ty))
     return false;
   if (!Ty.isVector())
     return true;
@@ -358,7 +387,7 @@ static bool loadStoreBitcastWorkaround(const LLT Ty) {
 static bool isLoadStoreLegal(const GCNSubtarget &ST, const LegalityQuery &Query) {
   const LLT Ty = Query.Types[0];
   return isRegisterType(Ty) && isLoadStoreSizeLegal(ST, Query) &&
-         !loadStoreBitcastWorkaround(Ty);
+         !hasBufferRsrcWorkaround(Ty) && !loadStoreBitcastWorkaround(Ty);
 }
 
 /// Return true if a load or store of the type should be lowered with a bitcast
@@ -426,6 +455,83 @@ static bool shouldWidenLoad(const GCNSubtarget &ST, const LegalityQuery &Query,
                          Query.Types[1].getAddressSpace(), Opcode);
 }
 
+/// Mutates IR (typicaly a load instruction) to use a <4 x s32> as the initial
+/// type of the operand `idx` and then to trunsform it to a `p8` via bitcasts
+/// and inttoptr. In addition, handle vectors of p8. Returns the new type.
+static LLT castBufferRsrcFromV4I32(MachineInstr &MI, MachineIRBuilder &B,
+                                   MachineRegisterInfo &MRI, unsigned Idx) {
+  MachineOperand &MO = MI.getOperand(Idx);
+
+  const LLT PointerTy = MRI.getType(MO.getReg());
+
+  // Paranoidly prevent us from doing this multiple times.
+  if (!hasBufferRsrcWorkaround(PointerTy))
+    return PointerTy;
+
+  const LLT ScalarTy = getBufferRsrcScalarType(PointerTy);
+  const LLT VectorTy = getBufferRsrcRegisterType(PointerTy);
+  if (!PointerTy.isVector()) {
+    // Happy path: (4 x s32) -> (s32, s32, s32, s32) -> (p8)
+    const unsigned NumParts = PointerTy.getSizeInBits() / 32;
+    const LLT S32 = LLT::scalar(32);
+
+    Register VectorReg = MRI.createGenericVirtualRegister(VectorTy);
+    SmallVector<Register, 4> VectorElems;
+    B.setInsertPt(B.getMBB(), ++B.getInsertPt());
+    for (unsigned I = 0; I < NumParts; ++I) {
+      VectorElems.push_back(MRI.createGenericVirtualRegister(S32));
+      B.buildExtractVectorElementConstant(VectorElems.back(), VectorReg, I);
+    }
+    B.buildMergeValues(MO, VectorElems);
+    MO.setReg(VectorReg);
+    return VectorTy;
+  }
+  Register BitcastReg = MRI.createGenericVirtualRegister(VectorTy);
+  Register ScalarReg = MRI.createGenericVirtualRegister(ScalarTy);
+
+  B.setInsertPt(B.getMBB(), ++B.getInsertPt());
+  B.buildBitcast(ScalarReg, BitcastReg);
+  B.buildIntToPtr(MO, ScalarReg);
+  MO.setReg(BitcastReg);
+
+  return VectorTy;
+}
+
+/// Cast a buffer resource (an address space 8 pointer) into a 4xi32, which is
+/// the form in which the value must be in order to be passed to the low-level
+/// representations used for MUBUF/MTBUF intrinsics. This is a hack, which is
+/// needed in order to account for the fact that we can't define a register
+/// class for s128 without breaking SelectionDAG.
+static Register castBufferRsrcToV4I32(Register Pointer, MachineIRBuilder &B) {
+  MachineRegisterInfo &MRI = *B.getMRI();
+  const LLT PointerTy = MRI.getType(Pointer);
+  const LLT ScalarTy = getBufferRsrcScalarType(PointerTy);
+  const LLT VectorTy = getBufferRsrcRegisterType(PointerTy);
+
+  if (!PointerTy.isVector()) {
+    // Special case: p8 -> (s32, s32, s32, s32) -> (4xs32)
+    SmallVector<Register, 4> PointerParts;
+    const unsigned NumParts = PointerTy.getSizeInBits() / 32;
+    auto Unmerged = B.buildUnmerge(LLT::scalar(32), Pointer);
+    for (unsigned I = 0; I < NumParts; ++I)
+      PointerParts.push_back(Unmerged.getReg(I));
+    return B.buildBuildVector(VectorTy, PointerParts).getReg(0);
+  }
+  Register Scalar = B.buildPtrToInt(ScalarTy, Pointer).getReg(0);
+  return B.buildBitcast(VectorTy, Scalar).getReg(0);
+}
+
+static void castBufferRsrcArgToV4I32(MachineInstr &MI, MachineIRBuilder &B,
+                                     unsigned Idx) {
+  MachineOperand &MO = MI.getOperand(Idx);
+
+  const LLT PointerTy = B.getMRI()->getType(MO.getReg());
+  // Paranoidly prevent us from doing this multiple times.
+  if (!hasBufferRsrcWorkaround(PointerTy))
+    return;
+  MO.setReg(castBufferRsrcToV4I32(MO.getReg(), B));
+}
+
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                          const GCNTargetMachine &TM)
   :  ST(ST_) {
@@ -488,6 +594,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   const LLT RegionPtr = GetAddrSpacePtr(AMDGPUAS::REGION_ADDRESS);
   const LLT FlatPtr = GetAddrSpacePtr(AMDGPUAS::FLAT_ADDRESS);
   const LLT PrivatePtr = GetAddrSpacePtr(AMDGPUAS::PRIVATE_ADDRESS);
+  const LLT BufferFatPtr = GetAddrSpacePtr(AMDGPUAS::BUFFER_FAT_POINTER);
+  const LLT RsrcPtr = GetAddrSpacePtr(AMDGPUAS::BUFFER_RESOURCE);
 
   const LLT CodePtr = FlatPtr;
 
@@ -498,6 +606,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   const std::initializer_list<LLT> AddrSpaces32 = {
     LocalPtr, PrivatePtr, Constant32Ptr, RegionPtr
   };
+
+  const std::initializer_list<LLT> AddrSpaces128 = {RsrcPtr};
 
   const std::initializer_list<LLT> FPTypesBase = {
     S32, S64
@@ -519,17 +629,18 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   // TODO: All multiples of 32, vectors of pointers, all v2s16 pairs, more
   // elements for v3s16
   getActionDefinitionsBuilder(G_PHI)
-    .legalFor({S32, S64, V2S16, S16, V4S16, S1, S128, S256})
-    .legalFor(AllS32Vectors)
-    .legalFor(AllS64Vectors)
-    .legalFor(AddrSpaces64)
-    .legalFor(AddrSpaces32)
-    .legalIf(isPointer(0))
-    .clampScalar(0, S16, S256)
-    .widenScalarToNextPow2(0, 32)
-    .clampMaxNumElements(0, S32, 16)
-    .moreElementsIf(isSmallOddVector(0), oneMoreElement(0))
-    .scalarize(0);
+      .legalFor({S32, S64, V2S16, S16, V4S16, S1, S128, S256})
+      .legalFor(AllS32Vectors)
+      .legalFor(AllS64Vectors)
+      .legalFor(AddrSpaces64)
+      .legalFor(AddrSpaces32)
+      .legalFor(AddrSpaces128)
+      .legalIf(isPointer(0))
+      .clampScalar(0, S16, S256)
+      .widenScalarToNextPow2(0, 32)
+      .clampMaxNumElements(0, S32, 16)
+      .moreElementsIf(isSmallOddVector(0), oneMoreElement(0))
+      .scalarize(0);
 
   if (ST.hasVOP3PInsts() && ST.hasAddNoCarry() && ST.hasIntClamp()) {
     // Full set of gfx9 features.
@@ -910,9 +1021,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   }
 
   getActionDefinitionsBuilder(G_PTR_ADD)
-    .legalIf(all(isPointer(0), sameSize(0, 1)))
-    .scalarize(0)
-    .scalarSameSizeAs(1, 0);
+      .unsupportedFor({BufferFatPtr, RsrcPtr})
+      .legalIf(all(isPointer(0), sameSize(0, 1)))
+      .scalarize(0)
+      .scalarSameSizeAs(1, 0);
 
   getActionDefinitionsBuilder(G_PTRMASK)
     .legalIf(all(sameSize(0, 1), typeInSet(1, {S64, S32})))
@@ -1183,6 +1295,18 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       [=](const LegalityQuery &Query) -> bool {
         return isLoadStoreLegal(ST, Query);
       });
+
+    // The custom pointers (fat pointers, buffer resources) don't work with load
+    // and store at this level. Fat pointers should haev been lowered to
+    // intrinsics before the translation to MIR.
+    Actions.unsupportedIf(typeInSet(1, {BufferFatPtr, RsrcPtr}));
+
+    // Address space 8 pointers are handled by a 4xs32 load, bitcast, and
+    // ptrtoint. This is needed to account for the fact that we can't have i128
+    // as a register class for SelectionDAG reasons.
+    Actions.customIf([=](const LegalityQuery &Query) -> bool {
+      return hasBufferRsrcWorkaround(Query.Types[0]);
+    });
 
     // Constant 32-bit is handled by addrspacecasting the 32-bit pointer to
     // 64-bits.
@@ -1456,6 +1580,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
           const LLT VecTy = Query.Types[VecTypeIdx];
           const LLT IdxTy = Query.Types[IdxTypeIdx];
           const unsigned EltSize = EltTy.getSizeInBits();
+          if (EltTy.isPointer() && EltSize > 64)
+            return true;
           return (EltSize == 32 || EltSize == 64) &&
                   VecTy.getSizeInBits() % 32 == 0 &&
                   VecTy.getSizeInBits() <= MaxRegisterSize &&
@@ -1783,6 +1909,8 @@ bool AMDGPULegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   case TargetOpcode::G_SEXTLOAD:
   case TargetOpcode::G_ZEXTLOAD:
     return legalizeLoad(Helper, MI);
+  case TargetOpcode::G_STORE:
+    return legalizeStore(Helper, MI);
   case TargetOpcode::G_FMAD:
     return legalizeFMad(MI, MRI, B);
   case TargetOpcode::G_FDIV:
@@ -2337,6 +2465,32 @@ bool AMDGPULegalizerInfo::legalizeExtractVectorElt(
 
   // TODO: Promote dynamic indexing of s16 to s32
 
+  Register Dst = MI.getOperand(0).getReg();
+  Register Vec = MI.getOperand(1).getReg();
+
+  LLT VecTy = MRI.getType(Vec);
+  LLT EltTy = VecTy.getElementType();
+  assert(EltTy == MRI.getType(Dst));
+
+  // Legalize vectors of large pointers to vectors of large integers so
+  // we don't try to do pointer <-> integer bitcasts later in legalization.
+  if (EltTy.isPointer() && EltTy.getSizeInBits() > 64) {
+    LLT IntVecTy =
+        LLT::scalarOrVector(VecTy.getElementCount(), EltTy.getSizeInBits());
+    LLT IntTy = LLT::scalar(EltTy.getSizeInBits());
+
+    Register IntVec = MRI.createGenericVirtualRegister(IntVecTy);
+    B.buildPtrToInt(IntVec, Vec);
+
+    Register IntElt = MRI.createGenericVirtualRegister(IntTy);
+    B.buildExtractVectorElement(IntElt, IntVec, MI.getOperand(2));
+
+    B.buildIntToPtr(Dst, IntElt);
+
+    MI.eraseFromParent();
+    return true;
+  }
+
   // FIXME: Artifact combiner probably should have replaced the truncated
   // constant before this, so we shouldn't need
   // getIConstantVRegValWithLookThrough.
@@ -2345,14 +2499,6 @@ bool AMDGPULegalizerInfo::legalizeExtractVectorElt(
   if (!MaybeIdxVal) // Dynamic case will be selected to register indexing.
     return true;
   const uint64_t IdxVal = MaybeIdxVal->Value.getZExtValue();
-
-  Register Dst = MI.getOperand(0).getReg();
-  Register Vec = MI.getOperand(1).getReg();
-
-  LLT VecTy = MRI.getType(Vec);
-  LLT EltTy = VecTy.getElementType();
-  assert(EltTy == MRI.getType(Dst));
-
   if (IdxVal < VecTy.getNumElements()) {
     auto Unmerge = B.buildUnmerge(EltTy, Vec);
     B.buildCopy(Dst, Unmerge.getReg(IdxVal));
@@ -2371,6 +2517,36 @@ bool AMDGPULegalizerInfo::legalizeInsertVectorElt(
 
   // TODO: Promote dynamic indexing of s16 to s32
 
+  Register Dst = MI.getOperand(0).getReg();
+  Register Vec = MI.getOperand(1).getReg();
+  Register Ins = MI.getOperand(2).getReg();
+
+  LLT VecTy = MRI.getType(Vec);
+  LLT EltTy = VecTy.getElementType();
+  assert(EltTy == MRI.getType(Ins));
+
+  // Legalize vectors of large pointers to vectors of large integers so
+  // we don't try to do pointer <-> integer bitcasts later in legalization.
+  if (EltTy.isPointer() && EltTy.getSizeInBits() > 64) {
+    LLT IntVecTy =
+        LLT::scalarOrVector(VecTy.getElementCount(), EltTy.getSizeInBits());
+    LLT IntTy = LLT::scalar(EltTy.getSizeInBits());
+
+    Register IntVecSource = MRI.createGenericVirtualRegister(IntVecTy);
+    B.buildPtrToInt(IntVecSource, Vec);
+    Register IntIns = MRI.createGenericVirtualRegister(IntTy);
+    B.buildPtrToInt(IntIns, Ins);
+
+    Register IntVecDest = MRI.createGenericVirtualRegister(IntVecTy);
+    B.buildInsertVectorElement(IntVecDest, IntVecSource, IntIns,
+                               MI.getOperand(3));
+
+    B.buildIntToPtr(Dst, IntVecDest);
+
+    MI.eraseFromParent();
+    return true;
+  }
+
   // FIXME: Artifact combiner probably should have replaced the truncated
   // constant before this, so we shouldn't need
   // getIConstantVRegValWithLookThrough.
@@ -2380,15 +2556,6 @@ bool AMDGPULegalizerInfo::legalizeInsertVectorElt(
     return true;
 
   const uint64_t IdxVal = MaybeIdxVal->Value.getZExtValue();
-  Register Dst = MI.getOperand(0).getReg();
-  Register Vec = MI.getOperand(1).getReg();
-  Register Ins = MI.getOperand(2).getReg();
-
-  LLT VecTy = MRI.getType(Vec);
-  LLT EltTy = VecTy.getElementType();
-  assert(EltTy == MRI.getType(Ins));
-  (void)Ins;
-
   unsigned NumElts = VecTy.getNumElements();
   if (IdxVal < NumElts) {
     SmallVector<Register, 8> SrcRegs;
@@ -2628,6 +2795,13 @@ bool AMDGPULegalizerInfo::legalizeLoad(LegalizerHelper &Helper,
   Register ValReg = MI.getOperand(0).getReg();
   LLT ValTy = MRI.getType(ValReg);
 
+  if (hasBufferRsrcWorkaround(ValTy)) {
+    Observer.changingInstr(MI);
+    castBufferRsrcFromV4I32(MI, B, MRI, 0);
+    Observer.changedInstr(MI);
+    return true;
+  }
+
   MachineMemOperand *MMO = *MI.memoperands_begin();
   const unsigned ValSize = ValTy.getSizeInBits();
   const LLT MemTy = MMO->getMemoryType();
@@ -2682,6 +2856,24 @@ bool AMDGPULegalizerInfo::legalizeLoad(LegalizerHelper &Helper,
     return true;
   }
 
+  return false;
+}
+
+bool AMDGPULegalizerInfo::legalizeStore(LegalizerHelper &Helper,
+                                        MachineInstr &MI) const {
+  MachineIRBuilder &B = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *B.getMRI();
+  GISelChangeObserver &Observer = Helper.Observer;
+
+  Register DataReg = MI.getOperand(0).getReg();
+  LLT DataTy = MRI.getType(DataReg);
+
+  if (hasBufferRsrcWorkaround(DataTy)) {
+    Observer.changingInstr(MI);
+    castBufferRsrcArgToV4I32(MI, B, 0);
+    Observer.changedInstr(MI);
+    return true;
+  }
   return false;
 }
 
@@ -4317,9 +4509,6 @@ void AMDGPULegalizerInfo::updateBufferMMO(MachineMemOperand *MMO,
     uint64_t TotalOffset = MaybeVOffsetVal->Value.getZExtValue() +
                            MaybeSOffsetVal->Value.getZExtValue() + ImmOffset;
     MMO->setOffset(TotalOffset);
-  } else {
-    // We don't have a constant combined offset to use in the MMO. Give up.
-    MMO->setValue((Value *)nullptr);
   }
 }
 
@@ -4394,6 +4583,10 @@ Register AMDGPULegalizerInfo::fixStoreSourceType(
 
   const LLT S16 = LLT::scalar(16);
 
+  // Fixup buffer resources themselves needing to be v4i128.
+  if (hasBufferRsrcWorkaround(Ty))
+    return castBufferRsrcToV4I32(VData, B);
+
   // Fixup illegal register types for i8 stores.
   if (Ty == LLT::scalar(8) || Ty == S16) {
     Register AnyExt = B.buildAnyExt(LLT::scalar(32), VData).getReg(0);
@@ -4422,6 +4615,7 @@ bool AMDGPULegalizerInfo::legalizeBufferStore(MachineInstr &MI,
   const LLT S32 = LLT::scalar(32);
 
   VData = fixStoreSourceType(B, VData, IsFormat);
+  castBufferRsrcArgToV4I32(MI, B, 2);
   Register RSrc = MI.getOperand(2).getReg();
 
   MachineMemOperand *MMO = *MI.memoperands_begin();
@@ -4539,6 +4733,7 @@ bool AMDGPULegalizerInfo::legalizeBufferLoad(MachineInstr &MI,
     ++OpOffset;
   }
 
+  castBufferRsrcArgToV4I32(MI, B, 2 + OpOffset);
   Register RSrc = MI.getOperand(2 + OpOffset).getReg();
 
   // The typed intrinsics add an immediate after the registers.
@@ -4567,6 +4762,12 @@ bool AMDGPULegalizerInfo::legalizeBufferLoad(MachineInstr &MI,
   unsigned ImmOffset;
 
   LLT Ty = MRI.getType(Dst);
+  // Make addrspace 8 pointers loads into 4xs32 loads here, so the rest of the
+  // logic doesn't have to handle that case.
+  if (hasBufferRsrcWorkaround(Ty)) {
+    Ty = castBufferRsrcFromV4I32(MI, B, MRI, 0);
+    Dst = MI.getOperand(0).getReg();
+  }
   LLT EltTy = Ty.getScalarType();
   const bool IsD16 = IsFormat && (EltTy.getSizeInBits() == 16);
   const bool Unpacked = ST.hasUnpackedD16VMem();
@@ -4739,6 +4940,8 @@ bool AMDGPULegalizerInfo::legalizeBufferAtomic(MachineInstr &MI,
     OpOffset = -1;
   }
 
+  // Since we don't have 128-bit atomics, we don't need to handle the case of
+  // p8 argmunents to the atomic itself.
   Register VData = MI.getOperand(2 + OpOffset).getReg();
   Register CmpVal;
 
@@ -4747,6 +4950,7 @@ bool AMDGPULegalizerInfo::legalizeBufferAtomic(MachineInstr &MI,
     ++OpOffset;
   }
 
+  castBufferRsrcArgToV4I32(MI, B, 3 + OpOffset);
   Register RSrc = MI.getOperand(3 + OpOffset).getReg();
   const unsigned NumVIndexOps = (IsCmpSwap ? 8 : 7) + HasReturn;
 
@@ -5286,6 +5490,11 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
 
   Observer.changingInstr(MI);
 
+  if (hasBufferRsrcWorkaround(Ty)) {
+    Ty = castBufferRsrcFromV4I32(MI, B, *B.getMRI(), 0);
+    Dst = MI.getOperand(0).getReg();
+    B.setInsertPt(B.getMBB(), MI);
+  }
   if (shouldBitcastLoadStoreType(ST, Ty, LLT::scalar(Size))) {
     Ty = getBitcastRegisterType(Ty);
     Helper.bitcastDst(MI, Ty, 0);
@@ -5307,6 +5516,10 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
   MachineMemOperand *NewAlignMMO = MF.getMachineMemOperand(
       MMO->getPointerInfo(), MMO->getFlags(), MMO->getSize(), AssertedAlign);
   MMO->refineAlignment(NewAlignMMO);
+
+  // Hack around the need for v4i32 values in the underlying descriptors because
+  // of SelectionDAG.
+  castBufferRsrcArgToV4I32(MI, B, 1);
 
   // There are no 96-bit result scalar loads, but widening to 128-bit should
   // always be legal. We may need to restore this to a 96-bit result if it turns

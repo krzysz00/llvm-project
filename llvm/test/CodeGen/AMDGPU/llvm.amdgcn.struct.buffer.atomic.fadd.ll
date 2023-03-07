@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=gfx908 -amdgpu-atomic-optimizations=false -verify-machineinstrs < %s | FileCheck %s -check-prefix=CHECK
 
 
-define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset(float %val, <4 x i32> inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset(float %val, ptr addrspace(8) inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
 ; CHECK-LABEL: struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_mov_b32 s11, s5
@@ -11,12 +11,12 @@ define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__
 ; CHECK-NEXT:    s_mov_b32 s8, s2
 ; CHECK-NEXT:    buffer_atomic_add_f32 v0, v[1:2], s[8:11], s6 idxen offen
 ; CHECK-NEXT:    s_endpgm
-  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, <4 x i32> %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 0)
+  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, ptr addrspace(8) %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
 ; Natural mapping, no voffset
-define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__0_voffset__sgpr_soffset(float %val, <4 x i32> inreg %rsrc, i32 %vindex, i32 inreg %soffset) {
+define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__0_voffset__sgpr_soffset(float %val, ptr addrspace(8) inreg %rsrc, i32 %vindex, i32 inreg %soffset) {
 ; CHECK-LABEL: struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__0_voffset__sgpr_soffset:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_mov_b32 s11, s5
@@ -25,11 +25,11 @@ define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__
 ; CHECK-NEXT:    s_mov_b32 s8, s2
 ; CHECK-NEXT:    buffer_atomic_add_f32 v0, v1, s[8:11], s6 idxen
 ; CHECK-NEXT:    s_endpgm
-  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 %soffset, i32 0)
+  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 %soffset, i32 0)
   ret void
 }
 
-define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset_slc(float %val, <4 x i32> inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset_slc(float %val, ptr addrspace(8) inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
 ; CHECK-LABEL: struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset_slc:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_mov_b32 s11, s5
@@ -38,11 +38,11 @@ define amdgpu_ps void @struct_buffer_atomic_add_f32_noret__vgpr_val__sgpr_rsrc__
 ; CHECK-NEXT:    s_mov_b32 s8, s2
 ; CHECK-NEXT:    buffer_atomic_add_f32 v0, v[1:2], s[8:11], s6 idxen offen slc
 ; CHECK-NEXT:    s_endpgm
-  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, <4 x i32> %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 2)
+  %ret = call float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float %val, ptr addrspace(8) %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 2)
   ret void
 }
 
-define amdgpu_ps void @struct_buffer_atomic_add_v2f16_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset(<2 x half> %val, <4 x i32> inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @struct_buffer_atomic_add_v2f16_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset(<2 x half> %val, ptr addrspace(8) inreg %rsrc, i32 %vindex, i32 %voffset, i32 inreg %soffset) {
 ; CHECK-LABEL: struct_buffer_atomic_add_v2f16_noret__vgpr_val__sgpr_rsrc__vgpr_voffset__sgpr_soffset:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_mov_b32 s11, s5
@@ -51,11 +51,11 @@ define amdgpu_ps void @struct_buffer_atomic_add_v2f16_noret__vgpr_val__sgpr_rsrc
 ; CHECK-NEXT:    s_mov_b32 s8, s2
 ; CHECK-NEXT:    buffer_atomic_pk_add_f16 v0, v[1:2], s[8:11], s6 idxen offen
 ; CHECK-NEXT:    s_endpgm
-  %ret = call <2 x half> @llvm.amdgcn.struct.buffer.atomic.fadd.v2f16(<2 x half> %val, <4 x i32> %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 0)
+  %ret = call <2 x half> @llvm.amdgcn.struct.buffer.atomic.fadd.v2f16(<2 x half> %val, ptr addrspace(8) %rsrc, i32 %vindex, i32 %voffset, i32 %soffset, i32 0)
   ret void
 }
 
-declare float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float, <4 x i32>, i32, i32, i32, i32 immarg) #0
-declare <2 x half> @llvm.amdgcn.struct.buffer.atomic.fadd.v2f16(<2 x half>, <4 x i32>, i32, i32, i32, i32 immarg) #0
+declare float @llvm.amdgcn.struct.buffer.atomic.fadd.f32(float, ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare <2 x half> @llvm.amdgcn.struct.buffer.atomic.fadd.v2f16(<2 x half>, ptr addrspace(8), i32, i32, i32, i32 immarg) #0
 
 attributes #0 = { nounwind }

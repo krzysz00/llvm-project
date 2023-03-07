@@ -2,9 +2,9 @@
 ; RUN: llc -march=amdgcn -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck %s --check-prefixes=GCN
 ; RUN: llc -global-isel -march=amdgcn -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck %s --check-prefixes=GCN
 
-declare void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) nocapture, i32 %size, i32 %voffset, i32 %soffset, i32 %offset, i32 %aux)
+declare void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) nocapture, i32 %size, i32 %voffset, i32 %soffset, i32 %offset, i32 %aux)
 
-define amdgpu_ps float @buffer_load_lds_dword(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds) {
+define amdgpu_ps float @buffer_load_lds_dword(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds) {
 ; GCN-LABEL: buffer_load_lds_dword:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -18,14 +18,14 @@ define amdgpu_ps float @buffer_load_lds_dword(<4 x i32> inreg %rsrc, ptr addrspa
 ; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    ; return to shader part epilog
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 0, i32 0)
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 4, i32 1)
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 8, i32 2)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 4, i32 1)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 0, i32 8, i32 2)
   %res = load float, ptr addrspace(3) %lds
   ret float %res
 }
 
-define amdgpu_ps void @buffer_load_lds_dword_imm_voffset(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds) {
+define amdgpu_ps void @buffer_load_lds_dword_imm_voffset(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds) {
 ; GCN-LABEL: buffer_load_lds_dword_imm_voffset:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    v_mov_b32_e32 v0, 0x800
@@ -34,11 +34,11 @@ define amdgpu_ps void @buffer_load_lds_dword_imm_voffset(<4 x i32> inreg %rsrc, 
 ; GCN-NEXT:    buffer_load_dword v0, s[0:3], 0 offen lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 2048, i32 0, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 2048, i32 0, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_dword_v_offset(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset) {
+define amdgpu_ps void @buffer_load_lds_dword_v_offset(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset) {
 ; GCN-LABEL: buffer_load_lds_dword_v_offset:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -46,11 +46,11 @@ define amdgpu_ps void @buffer_load_lds_dword_v_offset(<4 x i32> inreg %rsrc, ptr
 ; GCN-NEXT:    buffer_load_dword v0, s[0:3], 0 offen lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 0, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 0, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_dword_s_offset(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds, i32 inreg %soffset) {
+define amdgpu_ps void @buffer_load_lds_dword_s_offset(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds, i32 inreg %soffset) {
 ; GCN-LABEL: buffer_load_lds_dword_s_offset:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -58,11 +58,11 @@ define amdgpu_ps void @buffer_load_lds_dword_s_offset(<4 x i32> inreg %rsrc, ptr
 ; GCN-NEXT:    buffer_load_dword off, s[0:3], s5 lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 %soffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 0, i32 %soffset, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_dword_vs_offset(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @buffer_load_lds_dword_vs_offset(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset, i32 inreg %soffset) {
 ; GCN-LABEL: buffer_load_lds_dword_vs_offset:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -70,11 +70,11 @@ define amdgpu_ps void @buffer_load_lds_dword_vs_offset(<4 x i32> inreg %rsrc, pt
 ; GCN-NEXT:    buffer_load_dword v0, s[0:3], s5 offen lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 %soffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 %soffset, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_dword_vs_imm_offset(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset, i32 inreg %soffset) {
+define amdgpu_ps void @buffer_load_lds_dword_vs_imm_offset(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds, i32 %voffset, i32 inreg %soffset) {
 ; GCN-LABEL: buffer_load_lds_dword_vs_imm_offset:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -82,11 +82,11 @@ define amdgpu_ps void @buffer_load_lds_dword_vs_imm_offset(<4 x i32> inreg %rsrc
 ; GCN-NEXT:    buffer_load_dword v0, s[0:3], s5 offen offset:2048 lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 %soffset, i32 2048, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 4, i32 %voffset, i32 %soffset, i32 2048, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_ushort(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds) {
+define amdgpu_ps void @buffer_load_lds_ushort(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds) {
 ; GCN-LABEL: buffer_load_lds_ushort:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    v_mov_b32_e32 v0, 0x800
@@ -95,11 +95,11 @@ define amdgpu_ps void @buffer_load_lds_ushort(<4 x i32> inreg %rsrc, ptr addrspa
 ; GCN-NEXT:    buffer_load_ushort v0, s[0:3], 0 offen lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 2, i32 2048, i32 0, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 2, i32 2048, i32 0, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @buffer_load_lds_ubyte(<4 x i32> inreg %rsrc, ptr addrspace(3) inreg %lds) {
+define amdgpu_ps void @buffer_load_lds_ubyte(ptr addrspace(8) inreg %rsrc, ptr addrspace(3) inreg %lds) {
 ; GCN-LABEL: buffer_load_lds_ubyte:
 ; GCN:       ; %bb.0: ; %main_body
 ; GCN-NEXT:    s_mov_b32 m0, s4
@@ -107,6 +107,6 @@ define amdgpu_ps void @buffer_load_lds_ubyte(<4 x i32> inreg %rsrc, ptr addrspac
 ; GCN-NEXT:    buffer_load_ubyte off, s[0:3], 0 offset:2048 lds
 ; GCN-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.raw.buffer.load.lds(<4 x i32> %rsrc, ptr addrspace(3) %lds, i32 1, i32 0, i32 0, i32 2048, i32 0)
+  call void @llvm.amdgcn.raw.buffer.load.lds(ptr addrspace(8) %rsrc, ptr addrspace(3) %lds, i32 1, i32 0, i32 0, i32 2048, i32 0)
   ret void
 }

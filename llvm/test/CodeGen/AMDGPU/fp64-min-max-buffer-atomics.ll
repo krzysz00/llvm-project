@@ -9,11 +9,11 @@
 ; RUN: llc < %s -global-isel -march=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck %s -check-prefix=G_GFX10
 ; RUN: llc < %s -global-isel -march=amdgcn -mcpu=gfx1030 -verify-machineinstrs | FileCheck %s -check-prefix=G_GFX1030
 
-declare double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double, <4 x i32>, i32, i32, i32 immarg)
-declare double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double, <4 x i32>, i32, i32, i32 immarg)
+declare double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double, ptr addrspace(8), i32, i32, i32 immarg)
+declare double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double, ptr addrspace(8), i32, i32, i32 immarg)
 
 
-define amdgpu_kernel void @raw_buffer_atomic_min_noret_f64(<4 x i32> inreg %rsrc, double %data, i32 %vindex) {
+define amdgpu_kernel void @raw_buffer_atomic_min_noret_f64(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex) {
 ; SI-LABEL: raw_buffer_atomic_min_noret_f64:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    s_load_dwordx2 s[4:5], s[0:1], 0xd
@@ -114,11 +114,11 @@ define amdgpu_kernel void @raw_buffer_atomic_min_noret_f64(<4 x i32> inreg %rsrc
 ; G_GFX1030-NEXT:    buffer_atomic_fmin_x2 v[0:1], v2, s[0:3], 0 offen
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64(<4 x i32> inreg %rsrc, double %data, i32 %vindex) {
+define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex) {
 ; SI-LABEL: raw_buffer_atomic_min_rtn_f64:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    buffer_atomic_fmin_x2 v[0:1], v2, s[0:3], 0 offen glc
@@ -179,12 +179,12 @@ define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64(<4 x i32> inreg %rsrc, doub
 ; G_GFX1030-NEXT:    ds_write_b64 v0, v[0:1]
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   store double %ret, ptr addrspace(3) undef
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64_off4_slc(<4 x i32> inreg %rsrc, double %data, i32 %vindex, ptr addrspace(3) %out) {
+define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64_off4_slc(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex, ptr addrspace(3) %out) {
 ; SI-LABEL: raw_buffer_atomic_min_rtn_f64_off4_slc:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    buffer_atomic_fmin_x2 v[0:1], v2, s[0:3], 4 offen glc slc
@@ -245,12 +245,12 @@ define amdgpu_ps void @raw_buffer_atomic_min_rtn_f64_off4_slc(<4 x i32> inreg %r
 ; G_GFX1030-NEXT:    ds_write_b64 v3, v[0:1]
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 4, i32 2)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 4, i32 2)
   store double %ret, ptr addrspace(3) %out, align 8
   ret void
 }
 
-define amdgpu_kernel void @raw_buffer_atomic_max_noret_f64(<4 x i32> inreg %rsrc, double %data, i32 %vindex) {
+define amdgpu_kernel void @raw_buffer_atomic_max_noret_f64(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex) {
 ; SI-LABEL: raw_buffer_atomic_max_noret_f64:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    s_load_dwordx2 s[4:5], s[0:1], 0xd
@@ -351,11 +351,11 @@ define amdgpu_kernel void @raw_buffer_atomic_max_noret_f64(<4 x i32> inreg %rsrc
 ; G_GFX1030-NEXT:    buffer_atomic_fmax_x2 v[0:1], v2, s[0:3], 0 offen
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   ret void
 }
 
-define amdgpu_ps void @raw_buffer_atomic_max_rtn_f64(<4 x i32> inreg %rsrc, double %data, i32 %vindex) {
+define amdgpu_ps void @raw_buffer_atomic_max_rtn_f64(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex) {
 ; SI-LABEL: raw_buffer_atomic_max_rtn_f64:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    buffer_atomic_fmax_x2 v[0:1], v2, s[0:3], 0 offen glc
@@ -416,12 +416,12 @@ define amdgpu_ps void @raw_buffer_atomic_max_rtn_f64(<4 x i32> inreg %rsrc, doub
 ; G_GFX1030-NEXT:    ds_write_b64 v0, v[0:1]
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   store double %ret, ptr addrspace(3) undef
   ret void
 }
 
-define amdgpu_kernel void @raw_buffer_atomic_max_rtn_f64_off4_slc(<4 x i32> inreg %rsrc, double %data, i32 %vindex, ptr addrspace(3) %out) {
+define amdgpu_kernel void @raw_buffer_atomic_max_rtn_f64_off4_slc(ptr addrspace(8) inreg %rsrc, double %data, i32 %vindex, ptr addrspace(3) %out) {
 ; SI-LABEL: raw_buffer_atomic_max_rtn_f64_off4_slc:
 ; SI:       ; %bb.0: ; %main_body
 ; SI-NEXT:    s_load_dwordx8 s[0:7], s[0:1], 0x9
@@ -530,7 +530,7 @@ define amdgpu_kernel void @raw_buffer_atomic_max_rtn_f64_off4_slc(<4 x i32> inre
 ; G_GFX1030-NEXT:    ds_write_b64 v2, v[0:1]
 ; G_GFX1030-NEXT:    s_endpgm
 main_body:
-  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, <4 x i32> %rsrc, i32 %vindex, i32 4, i32 2)
+  %ret = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 4, i32 2)
   store double %ret, ptr addrspace(3) %out, align 8
   ret void
 }

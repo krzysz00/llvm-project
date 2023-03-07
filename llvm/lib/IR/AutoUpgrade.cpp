@@ -19,6 +19,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -27,6 +28,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAArch64.h"
+#include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsWebAssembly.h"
 #include "llvm/IR/IntrinsicsX86.h"
@@ -39,6 +41,7 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cstring>
+#include <optional>
 
 using namespace llvm;
 
@@ -589,6 +592,176 @@ static bool UpgradeX86IntrinsicFunction(Function *F, StringRef Name,
   return false;
 }
 
+/// If the declared function is a buffer intrinsic, return its ID and the
+/// position of the resource argument, but only if the resource argument is
+/// represented by a <4 x i32> instead of a ptr addrspace(8).
+static std::optional<std::pair<Intrinsic::ID, unsigned>>
+AMDGCNUpgradableBufferRsrcFunctionInfo(Function *F, StringRef Name) {
+  if (!Name.starts_with("amdgcn."))
+    return std::nullopt;
+
+  // Drop amdgcn. prefix
+  Name = Name.substr(7);
+  // Note that, in this switch, the ".format" and ".lds" variants come before
+  // that their unformatted counterparts. The second value is the position of
+  // the resource argument.
+  auto TableValue =
+      StringSwitch<std::pair<Intrinsic::ID, unsigned>>(Name)
+          .StartsWith("buffer.atomic.add",
+                      {Intrinsic::amdgcn_buffer_atomic_add, 1})
+          .StartsWith("buffer.atomic.and",
+                      {Intrinsic::amdgcn_buffer_atomic_and, 1})
+          .StartsWith("buffer.atomic.cmpswap",
+                      {Intrinsic::amdgcn_buffer_atomic_cmpswap, 2})
+          .StartsWith("buffer.atomic.csub",
+                      {Intrinsic::amdgcn_buffer_atomic_csub, 1})
+          .StartsWith("buffer.atomic.fadd",
+                      {Intrinsic::amdgcn_buffer_atomic_fadd, 1})
+          .StartsWith("buffer.atomic.or",
+                      {Intrinsic::amdgcn_buffer_atomic_or, 1})
+          .StartsWith("buffer.atomic.smax",
+                      {Intrinsic::amdgcn_buffer_atomic_smax, 1})
+          .StartsWith("buffer.atomic.smin",
+                      {Intrinsic::amdgcn_buffer_atomic_smin, 1})
+          .StartsWith("buffer.atomic.sub",
+                      {Intrinsic::amdgcn_buffer_atomic_sub, 1})
+          .StartsWith("buffer.atomic.swap",
+                      {Intrinsic::amdgcn_buffer_atomic_swap, 1})
+          .StartsWith("buffer.atomic.umax",
+                      {Intrinsic::amdgcn_buffer_atomic_umax, 1})
+          .StartsWith("buffer.atomic.umin",
+                      {Intrinsic::amdgcn_buffer_atomic_umin, 1})
+          .StartsWith("buffer.atomic.xor",
+                      {Intrinsic::amdgcn_buffer_atomic_xor, 1})
+          .StartsWith("buffer.load.format",
+                      {Intrinsic::amdgcn_buffer_load_format, 0})
+          .StartsWith("buffer.load", {Intrinsic::amdgcn_buffer_load, 0})
+          .StartsWith("buffer.store.format",
+                      {Intrinsic::amdgcn_buffer_store_format, 1})
+          .StartsWith("buffer.store", {Intrinsic::amdgcn_buffer_store, 1})
+          .StartsWith("raw.buffer.atomic.add",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_add, 1})
+          .StartsWith("raw.buffer.atomic.and",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_and, 1})
+          .StartsWith("raw.buffer.atomic.cmpswap",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_cmpswap, 2})
+          .StartsWith("raw.buffer.atomic.dec",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_dec, 1})
+          .StartsWith("raw.buffer.atomic.fadd",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_fadd, 1})
+          .StartsWith("raw.buffer.atomic.fmax",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_fmax, 1})
+          .StartsWith("raw.buffer.atomic.fmin",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_fmin, 1})
+          .StartsWith("raw.buffer.atomic.inc",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_inc, 1})
+          .StartsWith("raw.buffer.atomic.or",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_or, 1})
+          .StartsWith("raw.buffer.atomic.smax",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_smax, 1})
+          .StartsWith("raw.buffer.atomic.smin",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_smin, 1})
+          .StartsWith("raw.buffer.atomic.sub",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_sub, 1})
+          .StartsWith("raw.buffer.atomic.swap",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_swap, 1})
+          .StartsWith("raw.buffer.atomic.umax",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_umax, 1})
+          .StartsWith("raw.buffer.atomic.umin",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_umin, 1})
+          .StartsWith("raw.buffer.atomic.xor",
+                      {Intrinsic::amdgcn_raw_buffer_atomic_xor, 1})
+          .StartsWith("raw.buffer.load.format",
+                      {Intrinsic::amdgcn_raw_buffer_load_format, 0})
+          .StartsWith("raw.buffer.load.lds",
+                      {Intrinsic::amdgcn_raw_buffer_load_lds, 0})
+          .StartsWith("raw.buffer.load", {Intrinsic::amdgcn_raw_buffer_load, 0})
+          .StartsWith("raw.buffer.store.format",
+                      {Intrinsic::amdgcn_raw_buffer_store_format, 1})
+          .StartsWith("raw.buffer.store",
+                      {Intrinsic::amdgcn_raw_buffer_store, 1})
+          .StartsWith("raw.tbuffer.load",
+                      {Intrinsic::amdgcn_raw_tbuffer_load, 0})
+          .StartsWith("raw.tbuffer.store",
+                      {Intrinsic::amdgcn_raw_tbuffer_store, 1})
+          .StartsWith("s.buffer.load", {Intrinsic::amdgcn_s_buffer_load, 0})
+          .StartsWith("struct.buffer.atomic.add",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_add, 1})
+          .StartsWith("struct.buffer.atomic.and",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_and, 1})
+          .StartsWith("struct.buffer.atomic.cmpswap",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_cmpswap, 2})
+          .StartsWith("struct.buffer.atomic.dec",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_dec, 1})
+          .StartsWith("struct.buffer.atomic.fadd",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_fadd, 1})
+          .StartsWith("struct.buffer.atomic.fmax",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_fmax, 1})
+          .StartsWith("struct.buffer.atomic.fmin",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_fmin, 1})
+          .StartsWith("struct.buffer.atomic.inc",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_inc, 1})
+          .StartsWith("struct.buffer.atomic.or",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_or, 1})
+          .StartsWith("struct.buffer.atomic.smax",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_smax, 1})
+          .StartsWith("struct.buffer.atomic.smin",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_smin, 1})
+          .StartsWith("struct.buffer.atomic.sub",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_sub, 1})
+          .StartsWith("struct.buffer.atomic.swap",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_swap, 1})
+          .StartsWith("struct.buffer.atomic.umax",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_umax, 1})
+          .StartsWith("struct.buffer.atomic.umin",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_umin, 1})
+          .StartsWith("struct.buffer.atomic.xor",
+                      {Intrinsic::amdgcn_struct_buffer_atomic_xor, 1})
+          .StartsWith("struct.buffer.load.format",
+                      {Intrinsic::amdgcn_struct_buffer_load_format, 0})
+          .StartsWith("struct.buffer.load.lds",
+                      {Intrinsic::amdgcn_struct_buffer_load_lds, 0})
+          .StartsWith("struct.buffer.load",
+                      {Intrinsic::amdgcn_struct_buffer_load, 0})
+          .StartsWith("struct.buffer.store.format",
+                      {Intrinsic::amdgcn_struct_buffer_store_format, 1})
+          .StartsWith("struct.buffer.store",
+                      {Intrinsic::amdgcn_struct_buffer_store, 1})
+          .StartsWith("struct.tbuffer.load",
+                      {Intrinsic::amdgcn_struct_tbuffer_load, 0})
+          .StartsWith("struct.tbuffer.store",
+                      {Intrinsic::amdgcn_struct_tbuffer_store, 1})
+          .StartsWith("tbuffer.load", {Intrinsic::amdgcn_tbuffer_load, 0})
+          .StartsWith("tbuffer.store", {Intrinsic::amdgcn_tbuffer_store, 1})
+          .Default({Intrinsic::not_intrinsic, -1});
+  if (TableValue.first == Intrinsic::not_intrinsic)
+    return std::nullopt;
+  unsigned RsrcArgPosition = TableValue.second;
+  auto *RsrcType =
+      dyn_cast<FixedVectorType>(F->getArg(RsrcArgPosition)->getType());
+  if (!RsrcType)
+    return std::nullopt;
+  if (RsrcType->getNumElements() != 4 ||
+      !RsrcType->getElementType()->isIntegerTy(32))
+    return std::nullopt;
+  return TableValue;
+}
+
+static bool UpgradeAMDGCNBufferRsrcFunction(Function *F, Intrinsic::ID IID,
+                                            unsigned RsrcArgPos,
+                                            Function *&NewFn) {
+  // Loads are variadic in their return type, all other functions are variadic
+  // in their return argument.
+  Type *VarType =
+      (RsrcArgPos == 0) ? F->getReturnType() : F->arg_begin()->getType();
+  rename(F);
+  if (Intrinsic::isOverloaded(IID))
+    NewFn = Intrinsic::getDeclaration(F->getParent(), IID, VarType);
+  else
+    NewFn = Intrinsic::getDeclaration(F->getParent(), IID);
+  return true;
+}
+
 static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
@@ -835,6 +1008,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
                                         {F->getReturnType()});
       return true;
     }
+
+    // Buffer intrinsics have been moved from <4 x i32> %rsrc to ptr
+    // addrspace(8) %rsrc
+    std::optional<std::pair<Intrinsic::ID, unsigned>>
+        AMDGCNBufferRsrcUpgradeInfo =
+            AMDGCNUpgradableBufferRsrcFunctionInfo(F, Name);
+    if (AMDGCNBufferRsrcUpgradeInfo.has_value())
+      return UpgradeAMDGCNBufferRsrcFunction(
+          F, AMDGCNBufferRsrcUpgradeInfo->first,
+          AMDGCNBufferRsrcUpgradeInfo->second, NewFn);
 
     break;
   }
@@ -4019,6 +4202,22 @@ void llvm::UpgradeIntrinsicCall(CallBase *CI, Function *NewFn) {
     return;
   };
   CallInst *NewCall = nullptr;
+  const auto &AMDGCNBufferUpgrade = [&](unsigned RsrcPos) -> CallInst * {
+    SmallVector<Value *> Args(CI->args());
+    LLVMContext &Context = F->getParent()->getContext();
+    Value *OrigRsrc = Args[RsrcPos];
+    // We're here for metadata changes and not an actual upgrade
+    if (OrigRsrc->getType()->isPointerTy())
+      return nullptr;
+    StringRef OrigName = OrigRsrc->getName();
+    Args[RsrcPos] = Builder.CreateBitCast(
+        Args[RsrcPos], Type::getInt128Ty(Context), "." + OrigName + ".as.int");
+    Args[RsrcPos] = Builder.CreateIntToPtr(
+        Args[RsrcPos], PointerType::get(Context, /*AddressSpace=*/8),
+        "." + OrigName + ".as.ptr");
+    return Builder.CreateCall(NewFn, Args);
+  };
+
   switch (NewFn->getIntrinsicID()) {
   default: {
     DefaultCase();
@@ -4147,6 +4346,91 @@ void llvm::UpgradeIntrinsicCall(CallBase *CI, Function *NewFn) {
     NewCall = Builder.CreateCall(NewFn, Args);
     break;
   }
+
+  case Intrinsic::amdgcn_buffer_load:
+  case Intrinsic::amdgcn_buffer_load_format:
+  case Intrinsic::amdgcn_raw_buffer_load:
+  case Intrinsic::amdgcn_raw_buffer_load_format:
+  case Intrinsic::amdgcn_raw_buffer_load_lds:
+  case Intrinsic::amdgcn_raw_tbuffer_load:
+  case Intrinsic::amdgcn_s_buffer_load:
+  case Intrinsic::amdgcn_struct_buffer_load:
+  case Intrinsic::amdgcn_struct_buffer_load_format:
+  case Intrinsic::amdgcn_struct_buffer_load_lds:
+  case Intrinsic::amdgcn_struct_tbuffer_load:
+  case Intrinsic::amdgcn_tbuffer_load:
+    NewCall = AMDGCNBufferUpgrade(/*RsrcPos=*/0);
+    if (!NewCall) {
+      DefaultCase();
+      return;
+    }
+    break;
+  case Intrinsic::amdgcn_buffer_atomic_add:
+  case Intrinsic::amdgcn_buffer_atomic_and:
+  case Intrinsic::amdgcn_buffer_atomic_csub:
+  case Intrinsic::amdgcn_buffer_atomic_fadd:
+  case Intrinsic::amdgcn_buffer_atomic_or:
+  case Intrinsic::amdgcn_buffer_atomic_smax:
+  case Intrinsic::amdgcn_buffer_atomic_smin:
+  case Intrinsic::amdgcn_buffer_atomic_sub:
+  case Intrinsic::amdgcn_buffer_atomic_swap:
+  case Intrinsic::amdgcn_buffer_atomic_umax:
+  case Intrinsic::amdgcn_buffer_atomic_umin:
+  case Intrinsic::amdgcn_buffer_atomic_xor:
+  case Intrinsic::amdgcn_buffer_store:
+  case Intrinsic::amdgcn_buffer_store_format:
+  case Intrinsic::amdgcn_raw_buffer_atomic_add:
+  case Intrinsic::amdgcn_raw_buffer_atomic_and:
+  case Intrinsic::amdgcn_raw_buffer_atomic_dec:
+  case Intrinsic::amdgcn_raw_buffer_atomic_fadd:
+  case Intrinsic::amdgcn_raw_buffer_atomic_fmax:
+  case Intrinsic::amdgcn_raw_buffer_atomic_fmin:
+  case Intrinsic::amdgcn_raw_buffer_atomic_inc:
+  case Intrinsic::amdgcn_raw_buffer_atomic_or:
+  case Intrinsic::amdgcn_raw_buffer_atomic_smax:
+  case Intrinsic::amdgcn_raw_buffer_atomic_smin:
+  case Intrinsic::amdgcn_raw_buffer_atomic_sub:
+  case Intrinsic::amdgcn_raw_buffer_atomic_swap:
+  case Intrinsic::amdgcn_raw_buffer_atomic_umax:
+  case Intrinsic::amdgcn_raw_buffer_atomic_umin:
+  case Intrinsic::amdgcn_raw_buffer_atomic_xor:
+  case Intrinsic::amdgcn_raw_buffer_store:
+  case Intrinsic::amdgcn_raw_buffer_store_format:
+  case Intrinsic::amdgcn_raw_tbuffer_store:
+  case Intrinsic::amdgcn_struct_buffer_atomic_add:
+  case Intrinsic::amdgcn_struct_buffer_atomic_and:
+  case Intrinsic::amdgcn_struct_buffer_atomic_dec:
+  case Intrinsic::amdgcn_struct_buffer_atomic_fadd:
+  case Intrinsic::amdgcn_struct_buffer_atomic_fmax:
+  case Intrinsic::amdgcn_struct_buffer_atomic_fmin:
+  case Intrinsic::amdgcn_struct_buffer_atomic_inc:
+  case Intrinsic::amdgcn_struct_buffer_atomic_or:
+  case Intrinsic::amdgcn_struct_buffer_atomic_smax:
+  case Intrinsic::amdgcn_struct_buffer_atomic_smin:
+  case Intrinsic::amdgcn_struct_buffer_atomic_sub:
+  case Intrinsic::amdgcn_struct_buffer_atomic_swap:
+  case Intrinsic::amdgcn_struct_buffer_atomic_umax:
+  case Intrinsic::amdgcn_struct_buffer_atomic_umin:
+  case Intrinsic::amdgcn_struct_buffer_atomic_xor:
+  case Intrinsic::amdgcn_struct_buffer_store:
+  case Intrinsic::amdgcn_struct_buffer_store_format:
+  case Intrinsic::amdgcn_struct_tbuffer_store:
+  case Intrinsic::amdgcn_tbuffer_store:
+    NewCall = AMDGCNBufferUpgrade(/*RsrcPos=*/1);
+    if (!NewCall) {
+      DefaultCase();
+      return;
+    }
+    break;
+  case Intrinsic::amdgcn_buffer_atomic_cmpswap:
+  case Intrinsic::amdgcn_raw_buffer_atomic_cmpswap:
+  case Intrinsic::amdgcn_struct_buffer_atomic_cmpswap:
+    NewCall = AMDGCNBufferUpgrade(/*RsrcPos=*/2);
+    if (!NewCall) {
+      DefaultCase();
+      return;
+    }
+    break;
 
   case Intrinsic::bitreverse:
     NewCall = Builder.CreateCall(NewFn, {CI->getArgOperand(0)});

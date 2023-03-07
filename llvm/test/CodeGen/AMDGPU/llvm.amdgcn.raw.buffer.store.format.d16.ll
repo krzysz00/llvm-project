@@ -6,9 +6,9 @@
 ; GCN: s_load_dword s[[LO:[0-9]+]]
 ; GCN: v_mov_b32_e32 v[[V_LO:[0-9]+]], s[[LO]]
 ; GCN: buffer_store_format_d16_x v[[V_LO]], v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], 0 offen
-define amdgpu_kernel void @buffer_store_format_d16_x(<4 x i32> %rsrc, [8 x i32], half %data, [8 x i32], i32 %voffset) {
+define amdgpu_kernel void @buffer_store_format_d16_x(ptr addrspace(8) %rsrc, [8 x i32], half %data, [8 x i32], i32 %voffset) {
 main_body:
-  call void @llvm.amdgcn.raw.buffer.store.format.f16(half %data, <4 x i32> %rsrc, i32 %voffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.format.f16(half %data, ptr addrspace(8) %rsrc, i32 %voffset, i32 0, i32 0)
   ret void
 }
 
@@ -22,9 +22,9 @@ main_body:
 ; UNPACKED: buffer_store_format_d16_xy v[[[V_LO]]:[[V_HI]]], v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], 0 offen
 
 ; PACKED: buffer_store_format_d16_xy v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], 0 offen
-define amdgpu_kernel void @buffer_store_format_d16_xy(<4 x i32> %rsrc, <2 x half> %data, i32 %voffset) {
+define amdgpu_kernel void @buffer_store_format_d16_xy(ptr addrspace(8) %rsrc, <2 x half> %data, i32 %voffset) {
 main_body:
-  call void @llvm.amdgcn.raw.buffer.store.format.v2f16(<2 x half> %data, <4 x i32> %rsrc, i32 %voffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.format.v2f16(<2 x half> %data, ptr addrspace(8) %rsrc, i32 %voffset, i32 0, i32 0)
   ret void
 }
 
@@ -45,10 +45,10 @@ main_body:
 ; PACKED: v_mov_b32_e32 v[[HI:[0-9]+]], [[MASKED0]]
 
 ; PACKED: buffer_store_format_d16_xyz v[[[LO]]:[[HI]]], v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], 0 offen
-define amdgpu_kernel void @buffer_store_format_d16_xyz(<4 x i32> %rsrc, <4 x half> %data, i32 %voffset) {
+define amdgpu_kernel void @buffer_store_format_d16_xyz(ptr addrspace(8) %rsrc, <4 x half> %data, i32 %voffset) {
 main_body:
   %data_subvec = shufflevector <4 x half> %data, <4 x half> undef, <3 x i32> <i32 0, i32 1, i32 2>
-  call void @llvm.amdgcn.raw.buffer.store.format.v3f16(<3 x half> %data_subvec, <4 x i32> %rsrc, i32 %voffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.format.v3f16(<3 x half> %data_subvec, ptr addrspace(8) %rsrc, i32 %voffset, i32 0, i32 0)
   ret void
 }
 
@@ -69,13 +69,13 @@ main_body:
 ; PACKED: v_mov_b32_e32 v[[HI:[0-9]+]], s[[S_DATA_1]]
 
 ; PACKED: buffer_store_format_d16_xyzw v[[[LO]]:[[HI]]], v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], 0 offen
-define amdgpu_kernel void @buffer_store_format_d16_xyzw(<4 x i32> %rsrc, <4 x half> %data, i32 %voffset) {
+define amdgpu_kernel void @buffer_store_format_d16_xyzw(ptr addrspace(8) %rsrc, <4 x half> %data, i32 %voffset) {
 main_body:
-  call void @llvm.amdgcn.raw.buffer.store.format.v4f16(<4 x half> %data, <4 x i32> %rsrc, i32 %voffset, i32 0, i32 0)
+  call void @llvm.amdgcn.raw.buffer.store.format.v4f16(<4 x half> %data, ptr addrspace(8) %rsrc, i32 %voffset, i32 0, i32 0)
   ret void
 }
 
-declare void @llvm.amdgcn.raw.buffer.store.format.f16(half, <4 x i32>, i32, i32, i32)
-declare void @llvm.amdgcn.raw.buffer.store.format.v2f16(<2 x half>, <4 x i32>, i32, i32, i32)
-declare void @llvm.amdgcn.raw.buffer.store.format.v3f16(<3 x half>, <4 x i32>, i32, i32, i32)
-declare void @llvm.amdgcn.raw.buffer.store.format.v4f16(<4 x half>, <4 x i32>, i32, i32, i32)
+declare void @llvm.amdgcn.raw.buffer.store.format.f16(half, ptr addrspace(8), i32, i32, i32)
+declare void @llvm.amdgcn.raw.buffer.store.format.v2f16(<2 x half>, ptr addrspace(8), i32, i32, i32)
+declare void @llvm.amdgcn.raw.buffer.store.format.v3f16(<3 x half>, ptr addrspace(8), i32, i32, i32)
+declare void @llvm.amdgcn.raw.buffer.store.format.v4f16(<4 x half>, ptr addrspace(8), i32, i32, i32)

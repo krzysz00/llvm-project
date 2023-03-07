@@ -5,7 +5,7 @@
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1010 -verify-machineinstrs < %s | FileCheck -check-prefixes=GFX10-PACKED %s
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1100 -amdgpu-enable-vopd=0 -verify-machineinstrs < %s | FileCheck -check-prefixes=GFX11-PACKED %s
 
-define amdgpu_kernel void @tbuffer_store_d16_x(<4 x i32> %rsrc, half %data, i32 %vindex) {
+define amdgpu_kernel void @tbuffer_store_d16_x(ptr addrspace(8) %rsrc, half %data, i32 %vindex) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_store_d16_x:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    s_load_dwordx2 s[6:7], s[4:5], 0x10
@@ -49,11 +49,11 @@ define amdgpu_kernel void @tbuffer_store_d16_x(<4 x i32> %rsrc, half %data, i32 
 ; GFX11-PACKED-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-PACKED-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.f16(half %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.f16(half %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
   ret void
 }
 
-define amdgpu_kernel void @tbuffer_store_d16_xy(<4 x i32> %rsrc, <2 x half> %data, i32 %vindex) {
+define amdgpu_kernel void @tbuffer_store_d16_xy(ptr addrspace(8) %rsrc, <2 x half> %data, i32 %vindex) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_store_d16_xy:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    s_load_dwordx2 s[6:7], s[4:5], 0x10
@@ -100,11 +100,11 @@ define amdgpu_kernel void @tbuffer_store_d16_xy(<4 x i32> %rsrc, <2 x half> %dat
 ; GFX11-PACKED-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-PACKED-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v2f16(<2 x half> %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v2f16(<2 x half> %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
   ret void
 }
 
-define amdgpu_kernel void @tbuffer_store_d16_xyz(<4 x i32> %rsrc, <4 x half> %data, i32 %vindex) {
+define amdgpu_kernel void @tbuffer_store_d16_xyz(ptr addrspace(8) %rsrc, <4 x half> %data, i32 %vindex) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_store_d16_xyz:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    s_load_dwordx2 s[6:7], s[4:5], 0x10
@@ -164,11 +164,11 @@ define amdgpu_kernel void @tbuffer_store_d16_xyz(<4 x i32> %rsrc, <4 x half> %da
 ; GFX11-PACKED-NEXT:    s_endpgm
 main_body:
   %data_subvec = shufflevector <4 x half> %data, <4 x half> undef, <3 x i32> <i32 0, i32 1, i32 2>
-  call void @llvm.amdgcn.struct.tbuffer.store.v3f16(<3 x half> %data_subvec, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v3f16(<3 x half> %data_subvec, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
   ret void
 }
 
-define amdgpu_kernel void @tbuffer_store_d16_xyzw(<4 x i32> %rsrc, <4 x half> %data, i32 %vindex) {
+define amdgpu_kernel void @tbuffer_store_d16_xyzw(ptr addrspace(8) %rsrc, <4 x half> %data, i32 %vindex) {
 ; PREGFX10-UNPACKED-LABEL: tbuffer_store_d16_xyzw:
 ; PREGFX10-UNPACKED:       ; %bb.0: ; %main_body
 ; PREGFX10-UNPACKED-NEXT:    s_load_dwordx2 s[6:7], s[4:5], 0x10
@@ -226,11 +226,11 @@ define amdgpu_kernel void @tbuffer_store_d16_xyzw(<4 x i32> %rsrc, <4 x half> %d
 ; GFX11-PACKED-NEXT:    s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)
 ; GFX11-PACKED-NEXT:    s_endpgm
 main_body:
-  call void @llvm.amdgcn.struct.tbuffer.store.v4f16(<4 x half> %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
+  call void @llvm.amdgcn.struct.tbuffer.store.v4f16(<4 x half> %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0, i32 33, i32 0)
   ret void
 }
 
-declare void @llvm.amdgcn.struct.tbuffer.store.f16(half, <4 x i32>, i32, i32, i32, i32, i32)
-declare void @llvm.amdgcn.struct.tbuffer.store.v2f16(<2 x half>, <4 x i32>, i32, i32, i32, i32, i32)
-declare void @llvm.amdgcn.struct.tbuffer.store.v3f16(<3 x half>, <4 x i32>, i32, i32, i32, i32, i32)
-declare void @llvm.amdgcn.struct.tbuffer.store.v4f16(<4 x half>, <4 x i32>, i32, i32, i32, i32, i32)
+declare void @llvm.amdgcn.struct.tbuffer.store.f16(half, ptr addrspace(8), i32, i32, i32, i32, i32)
+declare void @llvm.amdgcn.struct.tbuffer.store.v2f16(<2 x half>, ptr addrspace(8), i32, i32, i32, i32, i32)
+declare void @llvm.amdgcn.struct.tbuffer.store.v3f16(<3 x half>, ptr addrspace(8), i32, i32, i32, i32, i32)
+declare void @llvm.amdgcn.struct.tbuffer.store.v4f16(<4 x half>, ptr addrspace(8), i32, i32, i32, i32, i32)

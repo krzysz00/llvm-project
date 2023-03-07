@@ -27,8 +27,11 @@ define amdgpu_ps float @uniform_kill(float %a, i32 %b, float %c) {
 ; SI-NEXT:    s_cbranch_execz .LBB0_5
 ; SI-NEXT:  ; %bb.4: ; %if2
 ; SI-NEXT:    s_mov_b32 s3, 0
+; SI-NEXT:    s_movk_i32 s2, 0x1f8
+; SI-NEXT:    s_load_dwordx2 s[6:7], s[2:3], 0x0
+; SI-NEXT:    s_movk_i32 s2, 0x1f0
 ; SI-NEXT:    v_add_f32_e32 v0, 1.0, v2
-; SI-NEXT:    s_load_dwordx4 s[4:7], s[2:3], 0x0
+; SI-NEXT:    s_load_dwordx2 s[4:5], s[2:3], 0x0
 ; SI-NEXT:    v_cvt_i32_f32_e32 v0, v0
 ; SI-NEXT:    s_waitcnt lgkmcnt(0)
 ; SI-NEXT:    buffer_atomic_swap v0, off, s[4:7], 0 offset:4 glc
@@ -67,8 +70,11 @@ define amdgpu_ps float @uniform_kill(float %a, i32 %b, float %c) {
 ; FLAT-NEXT:    s_cbranch_execz .LBB0_5
 ; FLAT-NEXT:  ; %bb.4: ; %if2
 ; FLAT-NEXT:    s_mov_b32 s3, 0
+; FLAT-NEXT:    s_movk_i32 s2, 0x1f8
+; FLAT-NEXT:    s_load_dwordx2 s[6:7], s[2:3], 0x0
+; FLAT-NEXT:    s_movk_i32 s2, 0x1f0
 ; FLAT-NEXT:    v_add_f32_e32 v0, 1.0, v2
-; FLAT-NEXT:    s_load_dwordx4 s[4:7], s[2:3], 0x0
+; FLAT-NEXT:    s_load_dwordx2 s[4:5], s[2:3], 0x0
 ; FLAT-NEXT:    v_cvt_i32_f32_e32 v0, v0
 ; FLAT-NEXT:    s_waitcnt lgkmcnt(0)
 ; FLAT-NEXT:    buffer_atomic_swap v0, off, s[4:7], 0 offset:4 glc
@@ -105,9 +111,9 @@ endif1:
   br i1 %.0, label %if2, label %endif2
 
 if2:
-  %.5 = getelementptr inbounds <4 x i32>, ptr addrspace(6) undef, i32 31, !amdgpu.uniform !0
-  %.6 = load <4 x i32>, ptr addrspace(6) %.5, align 16, !invariant.load !0
-  %.7 = call i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32 %.test1, <4 x i32> %.6, i32 4, i32 0, i32 0)
+  %.5 = getelementptr inbounds ptr addrspace(8), ptr addrspace(6) null, i32 31, !amdgpu.uniform !0
+  %.6 = load ptr addrspace(8), ptr addrspace(6) %.5, align 16, !invariant.load !0
+  %.7 = call i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32 %.test1, ptr addrspace(8) %.6, i32 4, i32 0, i32 0)
   %.8 = sitofp i32 %.7 to float
   br label %endif2
 
@@ -117,7 +123,7 @@ endif2:
 }
 
 
-declare i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32, <4 x i32>, i32, i32, i32 immarg) #2
+declare i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32, ptr addrspace(8), i32, i32, i32 immarg) #2
 declare i1 @llvm.amdgcn.wqm.vote(i1) #3
 declare void @llvm.amdgcn.kill(i1) #4
 declare float @llvm.amdgcn.wqm.f32(float) #1

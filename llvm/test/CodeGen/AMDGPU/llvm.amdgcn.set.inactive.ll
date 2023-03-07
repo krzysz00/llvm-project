@@ -43,7 +43,7 @@ define amdgpu_kernel void @set_inactive_64(ptr addrspace(1) %out, i64 %in) {
   ret void
 }
 
-define amdgpu_kernel void @set_inactive_scc(ptr addrspace(1) %out, i32 %in, <4 x i32> inreg %desc) {
+define amdgpu_kernel void @set_inactive_scc(ptr addrspace(1) %out, i32 %in, ptr addrspace(8) inreg %desc) {
 ; GCN-LABEL: set_inactive_scc:
 ; GCN:       ; %bb.0:
 ; GCN-NEXT:    s_load_dwordx4 s[4:7], s[0:1], 0x34
@@ -76,7 +76,7 @@ define amdgpu_kernel void @set_inactive_scc(ptr addrspace(1) %out, i32 %in, <4 x
 ; GCN-NEXT:    s_mov_b32 s2, -1
 ; GCN-NEXT:    buffer_store_dword v0, off, s[0:3], 0
 ; GCN-NEXT:    s_endpgm
-  %val = call i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32> %desc, i32 0, i32 0)
+  %val = call i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8) %desc, i32 0, i32 0)
   %cmp = icmp eq i32 %val, 56
   %tmp = call i32 @llvm.amdgcn.set.inactive.i32(i32 %in, i32 42) #0
   br i1 %cmp, label %.zero, label %.one
@@ -96,6 +96,6 @@ define amdgpu_kernel void @set_inactive_scc(ptr addrspace(1) %out, i32 %in, <4 x
 
 declare i32 @llvm.amdgcn.set.inactive.i32(i32, i32) #0
 declare i64 @llvm.amdgcn.set.inactive.i64(i64, i64) #0
-declare i32 @llvm.amdgcn.s.buffer.load.i32(<4 x i32>, i32, i32)
+declare i32 @llvm.amdgcn.s.buffer.load.i32(ptr addrspace(8), i32, i32)
 
 attributes #0 = { convergent readnone }

@@ -3,7 +3,7 @@
 ;RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck --check-prefixes=GFX8PLUS %s
 ;RUN: llc < %s -march=amdgcn -mcpu=gfx1100 -verify-machineinstrs | FileCheck --check-prefixes=GFX11 %s
 
-define amdgpu_ps {<4 x float>, <4 x float>, <4 x float>} @buffer_load(<4 x i32> inreg) {
+define amdgpu_ps {<4 x float>, <4 x float>, <4 x float>} @buffer_load(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v8, 0
@@ -32,16 +32,16 @@ define amdgpu_ps {<4 x float>, <4 x float>, <4 x float>} @buffer_load(<4 x i32> 
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0)
-  %data_glc = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 1)
-  %data_slc = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 2)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 0)
+  %data_glc = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 1)
+  %data_slc = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 0, i32 0, i32 2)
   %r0 = insertvalue {<4 x float>, <4 x float>, <4 x float>} undef, <4 x float> %data, 0
   %r1 = insertvalue {<4 x float>, <4 x float>, <4 x float>} %r0, <4 x float> %data_glc, 1
   %r2 = insertvalue {<4 x float>, <4 x float>, <4 x float>} %r1, <4 x float> %data_slc, 2
   ret {<4 x float>, <4 x float>, <4 x float>} %r2
 }
 
-define amdgpu_ps <4 x float> @buffer_load_immoffs(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_immoffs(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_immoffs:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v0, 0
@@ -63,11 +63,11 @@ define amdgpu_ps <4 x float> @buffer_load_immoffs(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 42, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 42, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_immoffs_large(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_immoffs_large(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_immoffs_large:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v8, 0
@@ -127,15 +127,15 @@ define amdgpu_ps <4 x float> @buffer_load_immoffs_large(<4 x i32> inreg) {
 ; GFX11-NEXT:    v_add_f32_e32 v2, v10, v2
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %d.0 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 4092, i32 60, i32 0)
-  %d.1 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 4092, i32 32764, i32 0)
-  %d.2 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 4, i32 36860, i32 0)
+  %d.0 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 4092, i32 60, i32 0)
+  %d.1 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 4092, i32 32764, i32 0)
+  %d.2 = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 4, i32 36860, i32 0)
   %d.3 = fadd <4 x float> %d.0, %d.1
   %data = fadd <4 x float> %d.2, %d.3
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_voffset_large_12bit(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_voffset_large_12bit(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_voffset_large_12bit:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v0, 0
@@ -157,11 +157,11 @@ define amdgpu_ps <4 x float> @buffer_load_voffset_large_12bit(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 4092, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 4092, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_voffset_large_13bit(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_voffset_large_13bit(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_voffset_large_13bit:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -189,11 +189,11 @@ define amdgpu_ps <4 x float> @buffer_load_voffset_large_13bit(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 8188, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 8188, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_voffset_large_16bit(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_voffset_large_16bit(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_voffset_large_16bit:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -221,11 +221,11 @@ define amdgpu_ps <4 x float> @buffer_load_voffset_large_16bit(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 65532, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 65532, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_voffset_large_23bit(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_voffset_large_23bit(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_voffset_large_23bit:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -253,11 +253,11 @@ define amdgpu_ps <4 x float> @buffer_load_voffset_large_23bit(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 8388604, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 8388604, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_voffset_large_24bit(<4 x i32> inreg) {
+define amdgpu_ps <4 x float> @buffer_load_voffset_large_24bit(ptr addrspace(8) inreg) {
 ; GFX6-LABEL: buffer_load_voffset_large_24bit:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -285,11 +285,11 @@ define amdgpu_ps <4 x float> @buffer_load_voffset_large_24bit(<4 x i32> inreg) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 16777212, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 16777212, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_idx(<4 x i32> inreg, i32) {
+define amdgpu_ps <4 x float> @buffer_load_idx(ptr addrspace(8) inreg, i32) {
 ; GFX6-LABEL: buffer_load_idx:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    buffer_load_format_xyzw v[0:3], v0, s[0:3], 0 idxen
@@ -308,11 +308,11 @@ define amdgpu_ps <4 x float> @buffer_load_idx(<4 x i32> inreg, i32) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 %1, i32 0, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 %1, i32 0, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_ofs(<4 x i32> inreg, i32) {
+define amdgpu_ps <4 x float> @buffer_load_ofs(ptr addrspace(8) inreg, i32) {
 ; GFX6-LABEL: buffer_load_ofs:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -340,11 +340,11 @@ define amdgpu_ps <4 x float> @buffer_load_ofs(<4 x i32> inreg, i32) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 %1, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 %1, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_ofs_imm(<4 x i32> inreg, i32) {
+define amdgpu_ps <4 x float> @buffer_load_ofs_imm(ptr addrspace(8) inreg, i32) {
 ; GFX6-LABEL: buffer_load_ofs_imm:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    s_mov_b32 s4, 0
@@ -373,11 +373,11 @@ define amdgpu_ps <4 x float> @buffer_load_ofs_imm(<4 x i32> inreg, i32) {
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
   %ofs = add i32 %1, 60
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 0, i32 %ofs, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 0, i32 %ofs, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_both(<4 x i32> inreg, i32, i32) {
+define amdgpu_ps <4 x float> @buffer_load_both(ptr addrspace(8) inreg, i32, i32) {
 ; GFX6-LABEL: buffer_load_both:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    buffer_load_format_xyzw v[0:3], v[0:1], s[0:3], 0 idxen offen
@@ -396,11 +396,11 @@ define amdgpu_ps <4 x float> @buffer_load_both(<4 x i32> inreg, i32, i32) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 %1, i32 %2, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 %1, i32 %2, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps <4 x float> @buffer_load_both_reversed(<4 x i32> inreg, i32, i32) {
+define amdgpu_ps <4 x float> @buffer_load_both_reversed(ptr addrspace(8) inreg, i32, i32) {
 ; GFX6-LABEL: buffer_load_both_reversed:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v2, v0
@@ -422,11 +422,11 @@ define amdgpu_ps <4 x float> @buffer_load_both_reversed(<4 x i32> inreg, i32, i3
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32> %0, i32 %2, i32 %1, i32 0, i32 0)
+  %data = call <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8) %0, i32 %2, i32 %1, i32 0, i32 0)
   ret <4 x float> %data
 }
 
-define amdgpu_ps float @buffer_load_x(<4 x i32> inreg %rsrc) {
+define amdgpu_ps float @buffer_load_x(ptr addrspace(8) inreg %rsrc) {
 ; GFX6-LABEL: buffer_load_x:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v0, 0
@@ -448,11 +448,11 @@ define amdgpu_ps float @buffer_load_x(<4 x i32> inreg %rsrc) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call float @llvm.amdgcn.struct.buffer.load.format.f32(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %data = call float @llvm.amdgcn.struct.buffer.load.format.f32(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   ret float %data
 }
 
-define amdgpu_ps float @buffer_load_x_i32(<4 x i32> inreg %rsrc) {
+define amdgpu_ps float @buffer_load_x_i32(ptr addrspace(8) inreg %rsrc) {
 ; GFX6-LABEL: buffer_load_x_i32:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v0, 0
@@ -474,12 +474,12 @@ define amdgpu_ps float @buffer_load_x_i32(<4 x i32> inreg %rsrc) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call i32 @llvm.amdgcn.struct.buffer.load.format.i32(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %data = call i32 @llvm.amdgcn.struct.buffer.load.format.i32(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %fdata = bitcast i32 %data to float
   ret float %fdata
 }
 
-define amdgpu_ps <2 x float> @buffer_load_xy(<4 x i32> inreg %rsrc) {
+define amdgpu_ps <2 x float> @buffer_load_xy(ptr addrspace(8) inreg %rsrc) {
 ; GFX6-LABEL: buffer_load_xy:
 ; GFX6:       ; %bb.0: ; %main_body
 ; GFX6-NEXT:    v_mov_b32_e32 v0, 0
@@ -501,11 +501,11 @@ define amdgpu_ps <2 x float> @buffer_load_xy(<4 x i32> inreg %rsrc) {
 ; GFX11-NEXT:    s_waitcnt vmcnt(0)
 ; GFX11-NEXT:    ; return to shader part epilog
 main_body:
-  %data = call <2 x float> @llvm.amdgcn.struct.buffer.load.format.v2f32(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %data = call <2 x float> @llvm.amdgcn.struct.buffer.load.format.v2f32(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   ret <2 x float> %data
 }
 
-define amdgpu_cs float @buffer_load_v4i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v4i32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v4i32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -539,7 +539,7 @@ define amdgpu_cs float @buffer_load_v4i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v6
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <4 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4i32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <4 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4i32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <4 x i32>, i32 } %load, 0
   store <4 x i32> %data, ptr addrspace(1) %out
   %status = extractvalue { <4 x i32>, i32 } %load, 1
@@ -547,7 +547,7 @@ define amdgpu_cs float @buffer_load_v4i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_v4f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v4f32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v4f32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -581,7 +581,7 @@ define amdgpu_cs float @buffer_load_v4f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v6
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <4 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4f32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <4 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4f32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <4 x float>, i32 } %load, 0
   store <4 x float> %data, ptr addrspace(1) %out
   %status = extractvalue { <4 x float>, i32 } %load, 1
@@ -589,7 +589,7 @@ define amdgpu_cs float @buffer_load_v4f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_v3i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v3i32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v3i32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -624,7 +624,7 @@ define amdgpu_cs float @buffer_load_v3i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v5
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <3 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3i32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <3 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3i32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <3 x i32>, i32 } %load, 0
   store <3 x i32> %data, ptr addrspace(1) %out
   %status = extractvalue { <3 x i32>, i32 } %load, 1
@@ -632,7 +632,7 @@ define amdgpu_cs float @buffer_load_v3i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_v3f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v3f32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v3f32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -667,7 +667,7 @@ define amdgpu_cs float @buffer_load_v3f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v5
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <3 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3f32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <3 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3f32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <3 x float>, i32 } %load, 0
   store <3 x float> %data, ptr addrspace(1) %out
   %status = extractvalue { <3 x float>, i32 } %load, 1
@@ -675,7 +675,7 @@ define amdgpu_cs float @buffer_load_v3f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_v2i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v2i32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v2i32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -709,7 +709,7 @@ define amdgpu_cs float @buffer_load_v2i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v4
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <2 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2i32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <2 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2i32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <2 x i32>, i32 } %load, 0
   store <2 x i32> %data, ptr addrspace(1) %out
   %status = extractvalue { <2 x i32>, i32 } %load, 1
@@ -717,7 +717,7 @@ define amdgpu_cs float @buffer_load_v2i32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_v2f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_v2f32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_v2f32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -751,7 +751,7 @@ define amdgpu_cs float @buffer_load_v2f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v4
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { <2 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2f32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { <2 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2f32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { <2 x float>, i32 } %load, 0
   store <2 x float> %data, ptr addrspace(1) %out
   %status = extractvalue { <2 x float>, i32 } %load, 1
@@ -759,7 +759,7 @@ define amdgpu_cs float @buffer_load_v2f32_tfe(<4 x i32> inreg %rsrc, ptr addrspa
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_i32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_i32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -793,7 +793,7 @@ define amdgpu_cs float @buffer_load_i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v3
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { i32, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_i32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { i32, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_i32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { i32, i32 } %load, 0
   store i32 %data, ptr addrspace(1) %out
   %status = extractvalue { i32, i32 } %load, 1
@@ -801,7 +801,7 @@ define amdgpu_cs float @buffer_load_i32_tfe(<4 x i32> inreg %rsrc, ptr addrspace
   ret float %fstatus
 }
 
-define amdgpu_cs float @buffer_load_f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace(1) %out) {
+define amdgpu_cs float @buffer_load_f32_tfe(ptr addrspace(8) inreg %rsrc, ptr addrspace(1) %out) {
 ; GFX6-LABEL: buffer_load_f32_tfe:
 ; GFX6:       ; %bb.0:
 ; GFX6-NEXT:    v_mov_b32_e32 v2, 0
@@ -835,7 +835,7 @@ define amdgpu_cs float @buffer_load_f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v3
 ; GFX11-NEXT:    s_waitcnt_vscnt null, 0x0
 ; GFX11-NEXT:    ; return to shader part epilog
-  %load = call { float, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_f32i32s(<4 x i32> %rsrc, i32 0, i32 0, i32 0, i32 0)
+  %load = call { float, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_f32i32s(ptr addrspace(8) %rsrc, i32 0, i32 0, i32 0, i32 0)
   %data = extractvalue { float, i32 } %load, 0
   store float %data, ptr addrspace(1) %out
   %status = extractvalue { float, i32 } %load, 1
@@ -843,16 +843,16 @@ define amdgpu_cs float @buffer_load_f32_tfe(<4 x i32> inreg %rsrc, ptr addrspace
   ret float %fstatus
 }
 
-declare float @llvm.amdgcn.struct.buffer.load.format.f32(<4 x i32>, i32, i32, i32, i32) #0
-declare <2 x float> @llvm.amdgcn.struct.buffer.load.format.v2f32(<4 x i32>, i32, i32, i32, i32) #0
-declare <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(<4 x i32>, i32, i32, i32, i32) #0
-declare i32 @llvm.amdgcn.struct.buffer.load.format.i32(<4 x i32>, i32, i32, i32, i32) #0
-declare { <4 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4i32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { <4 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4f32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { <3 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3i32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { <3 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3f32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { <2 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2i32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { <2 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2f32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { i32, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_i32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
-declare { float, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_f32i32s(<4 x i32>, i32, i32, i32, i32 immarg) #0
+declare float @llvm.amdgcn.struct.buffer.load.format.f32(ptr addrspace(8), i32, i32, i32, i32) #0
+declare <2 x float> @llvm.amdgcn.struct.buffer.load.format.v2f32(ptr addrspace(8), i32, i32, i32, i32) #0
+declare <4 x float> @llvm.amdgcn.struct.buffer.load.format.v4f32(ptr addrspace(8), i32, i32, i32, i32) #0
+declare i32 @llvm.amdgcn.struct.buffer.load.format.i32(ptr addrspace(8), i32, i32, i32, i32) #0
+declare { <4 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4i32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { <4 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v4f32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { <3 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3i32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { <3 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v3f32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { <2 x i32>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2i32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { <2 x float>, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_v2f32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { i32, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_i32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
+declare { float, i32 } @llvm.amdgcn.struct.buffer.load.format.sl_f32i32s(ptr addrspace(8), i32, i32, i32, i32 immarg) #0
 attributes #0 = { nounwind readonly }

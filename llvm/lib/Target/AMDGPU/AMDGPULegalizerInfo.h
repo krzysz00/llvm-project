@@ -14,9 +14,11 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUMACHINELEGALIZER_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUMACHINELEGALIZER_H
 
-#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "AMDGPUArgumentUsageInfo.h"
 #include "SIInstrInfo.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 namespace llvm {
 
@@ -71,6 +73,7 @@ public:
   bool legalizeGlobalValue(MachineInstr &MI, MachineRegisterInfo &MRI,
                            MachineIRBuilder &B) const;
   bool legalizeLoad(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeStore(LegalizerHelper &Helper, MachineInstr &MI) const;
 
   bool legalizeFMad(MachineInstr &MI, MachineRegisterInfo &MRI,
                     MachineIRBuilder &B) const;
@@ -171,10 +174,6 @@ public:
 
   Register handleD16VData(MachineIRBuilder &B, MachineRegisterInfo &MRI,
                           Register Reg, bool ImageStore = false) const;
-  bool legalizeRawBufferStore(MachineInstr &MI, MachineRegisterInfo &MRI,
-                              MachineIRBuilder &B, bool IsFormat) const;
-  bool legalizeRawBufferLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
-                             MachineIRBuilder &B, bool IsFormat) const;
   Register fixStoreSourceType(MachineIRBuilder &B, Register VData,
                               bool IsFormat) const;
 

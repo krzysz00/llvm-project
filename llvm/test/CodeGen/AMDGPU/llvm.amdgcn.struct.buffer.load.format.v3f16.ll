@@ -5,7 +5,7 @@
 ; RUN: llc -mcpu=gfx1100 -mtriple=amdgcn-- -verify-machineinstrs < %s | FileCheck -check-prefix=GFX11 %s
 @esgs_ring = external addrspace(3) global [0 x i32], align 65536
 
-define amdgpu_gs void @main(<4 x i32> %arg, i32 %arg1) {
+define amdgpu_gs void @main(ptr addrspace(8) %arg, i32 %arg1) {
 ; GFX10-LABEL: main:
 ; GFX10:       ; %bb.0: ; %bb
 ; GFX10-NEXT:    s_mov_b32 s1, exec_lo
@@ -113,7 +113,7 @@ define amdgpu_gs void @main(<4 x i32> %arg, i32 %arg1) {
 ; GFX11-NEXT:    ds_store_2addr_b32 v2, v0, v1 offset0:7 offset1:8
 bb:
   %i = call i32 @llvm.amdgcn.mbcnt.hi(i32 -1, i32 undef)
-  %i2 = call nsz arcp <3 x half> @llvm.amdgcn.struct.buffer.load.format.v3f16(<4 x i32> %arg, i32 %arg1, i32 0, i32 0, i32 0)
+  %i2 = call nsz arcp <3 x half> @llvm.amdgcn.struct.buffer.load.format.v3f16(ptr addrspace(8) %arg, i32 %arg1, i32 0, i32 0, i32 0)
   %i3 = bitcast <3 x half> %i2 to <3 x i16>
   %i4 = extractelement <3 x i16> %i3, i32 1
   %i5 = bitcast <3 x half> %i2 to <3 x i16>
@@ -131,6 +131,6 @@ bb:
 ; Function Attrs: nounwind readnone willreturn
 declare i32 @llvm.amdgcn.mbcnt.hi(i32, i32) #0
 ; Function Attrs: nounwind readonly willreturn
-declare <3 x half> @llvm.amdgcn.struct.buffer.load.format.v3f16(<4 x i32>, i32, i32, i32, i32 immarg) #1
+declare <3 x half> @llvm.amdgcn.struct.buffer.load.format.v3f16(ptr addrspace(8), i32, i32, i32, i32 immarg) #1
 attributes #0 = { nounwind readnone willreturn }
 attributes #1 = { nounwind readonly willreturn }

@@ -591,7 +591,7 @@ define protected amdgpu_kernel void @fmax(ptr addrspace(1) %p, ptr addrspace(1) 
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.swap(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.swap(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.swap:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -606,14 +606,14 @@ define protected amdgpu_kernel void @buffer.atomic.swap(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.add(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.add(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.add:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -628,14 +628,14 @@ define protected amdgpu_kernel void @buffer.atomic.add(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.add.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.add.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.sub(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.sub(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.sub:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -650,14 +650,14 @@ define protected amdgpu_kernel void @buffer.atomic.sub(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.sub.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.sub.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.smin(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.smin(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.smin:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -672,14 +672,14 @@ define protected amdgpu_kernel void @buffer.atomic.smin(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.smin.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.smin.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.smax(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.smax(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.smax:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -694,14 +694,14 @@ define protected amdgpu_kernel void @buffer.atomic.smax(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.smax.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.smax.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.umin(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.umin(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.umin:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -716,14 +716,14 @@ define protected amdgpu_kernel void @buffer.atomic.umin(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.umin.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.umin.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.umax(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.umax(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.umax:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -738,14 +738,14 @@ define protected amdgpu_kernel void @buffer.atomic.umax(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.umax.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.umax.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.and(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.and(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.and:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -760,14 +760,14 @@ define protected amdgpu_kernel void @buffer.atomic.and(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.and.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.and.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.or(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.or(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.or:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -782,14 +782,14 @@ define protected amdgpu_kernel void @buffer.atomic.or(<4 x i32> inreg %rsrc, i32
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.or.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.or.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.xor(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.xor(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.xor:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -804,14 +804,14 @@ define protected amdgpu_kernel void @buffer.atomic.xor(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.xor.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.xor.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.inc(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.inc(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.inc:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -826,14 +826,14 @@ define protected amdgpu_kernel void @buffer.atomic.inc(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.inc.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.inc.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.dec(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.dec(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.dec:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -848,14 +848,14 @@ define protected amdgpu_kernel void @buffer.atomic.dec(<4 x i32> inreg %rsrc, i3
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.dec.i32(i32 1, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.dec.i32(i32 1, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.cmpswap(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.cmpswap(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.cmpswap:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -871,14 +871,14 @@ define protected amdgpu_kernel void @buffer.atomic.cmpswap(<4 x i32> inreg %rsrc
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.cmpswap.i32(i32 1, i32 2, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %n32 = call i32 @llvm.amdgcn.raw.buffer.atomic.cmpswap.i32(i32 1, i32 2, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
   store float 1.0, ptr addrspace(1) %p1
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.fadd(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.fadd(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.fadd:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -894,7 +894,7 @@ define protected amdgpu_kernel void @buffer.atomic.fadd(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %f32 = call float @llvm.amdgcn.raw.buffer.atomic.fadd.f32(float 1.0, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %f32 = call float @llvm.amdgcn.raw.buffer.atomic.fadd.f32(float 1.0, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n32 = fptoui float %f32 to i32
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
@@ -902,7 +902,7 @@ define protected amdgpu_kernel void @buffer.atomic.fadd(<4 x i32> inreg %rsrc, i
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.fmin(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.fmin(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.fmin:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -919,7 +919,7 @@ define protected amdgpu_kernel void @buffer.atomic.fmin(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %f64 = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double 1.0, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %f64 = call double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double 1.0, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n32 = fptoui double %f64 to i32
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
@@ -927,7 +927,7 @@ define protected amdgpu_kernel void @buffer.atomic.fmin(<4 x i32> inreg %rsrc, i
   ret void
 }
 
-define protected amdgpu_kernel void @buffer.atomic.fmax(<4 x i32> inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
+define protected amdgpu_kernel void @buffer.atomic.fmax(ptr addrspace(8) inreg %rsrc, i32 %vindex, ptr addrspace(1) %q) {
 ; CHECK-LABEL: buffer.atomic.fmax:
 ; CHECK:       ; %bb.0:
 ; CHECK-NEXT:    s_load_dword s2, s[0:1], 0x34
@@ -944,7 +944,7 @@ define protected amdgpu_kernel void @buffer.atomic.fmax(<4 x i32> inreg %rsrc, i
 ; CHECK-NEXT:    v_mad_u64_u32 v[0:1], s[0:1], v0, 12, s[0:1]
 ; CHECK-NEXT:    global_store_dword v[0:1], v2, off
 ; CHECK-NEXT:    s_endpgm
-  %f64 = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double 1.0, <4 x i32> %rsrc, i32 %vindex, i32 0, i32 0)
+  %f64 = call double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double 1.0, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i32 0)
   %n32 = fptoui double %f64 to i32
   %n64 = zext i32 %n32 to i64
   %p1 = getelementptr inbounds %S, ptr addrspace(1) %q, i64 %n64, i32 0
@@ -956,19 +956,19 @@ declare i32 @llvm.amdgcn.atomic.inc.i32.p1(ptr addrspace(1), i32, i32 immarg, i3
 declare i32 @llvm.amdgcn.atomic.dec.i32.p1(ptr addrspace(1), i32, i32 immarg, i32 immarg, i1 immarg)
 declare double @llvm.amdgcn.global.atomic.fmin.f64.p1.f64(ptr addrspace(1), double)
 declare double @llvm.amdgcn.global.atomic.fmax.f64.p1.f64(ptr addrspace(1), double)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.add.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.sub.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.smin.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.smax.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.umin.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.umax.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.and.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.or.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.xor.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.inc.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.dec.i32(i32, <4 x i32>, i32, i32, i32)
-declare i32 @llvm.amdgcn.raw.buffer.atomic.cmpswap.i32(i32, i32, <4 x i32>, i32, i32, i32)
-declare float @llvm.amdgcn.raw.buffer.atomic.fadd.f32(float, <4 x i32>, i32, i32, i32)
-declare double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double, <4 x i32>, i32, i32, i32)
-declare double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double, <4 x i32>, i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.swap.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.add.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.sub.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.smin.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.smax.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.umin.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.umax.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.and.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.or.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.xor.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.inc.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.dec.i32(i32, ptr addrspace(8), i32, i32, i32)
+declare i32 @llvm.amdgcn.raw.buffer.atomic.cmpswap.i32(i32, i32, ptr addrspace(8), i32, i32, i32)
+declare float @llvm.amdgcn.raw.buffer.atomic.fadd.f32(float, ptr addrspace(8), i32, i32, i32)
+declare double @llvm.amdgcn.raw.buffer.atomic.fmin.f64(double, ptr addrspace(8), i32, i32, i32)
+declare double @llvm.amdgcn.raw.buffer.atomic.fmax.f64(double, ptr addrspace(8), i32, i32, i32)

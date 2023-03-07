@@ -1,22 +1,22 @@
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1030 -verify-machineinstrs | FileCheck %s -check-prefix=GCN
 ; RUN: llc < %s -march=amdgcn -mcpu=gfx1031 -verify-machineinstrs | FileCheck %s -check-prefix=GCN
 
-declare i32 @llvm.amdgcn.buffer.atomic.csub(i32, <4 x i32>, i32, i32, i1)
+declare i32 @llvm.amdgcn.buffer.atomic.csub(i32, ptr addrspace(8), i32, i32, i1)
 declare i32 @llvm.amdgcn.global.atomic.csub(ptr addrspace(1), i32)
 
 ; GCN-LABEL: {{^}}buffer_atomic_csub:
 ; GCN: buffer_atomic_csub v0, v1, s[0:3], 0 idxen glc
-define amdgpu_ps void @buffer_atomic_csub(<4 x i32> inreg %rsrc, i32 %data, i32 %vindex) {
+define amdgpu_ps void @buffer_atomic_csub(ptr addrspace(8) inreg %rsrc, i32 %data, i32 %vindex) {
 main_body:
-  %ret = call i32 @llvm.amdgcn.buffer.atomic.csub(i32 %data, <4 x i32> %rsrc, i32 %vindex, i32 0, i1 0)
+  %ret = call i32 @llvm.amdgcn.buffer.atomic.csub(i32 %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 0, i1 0)
   ret void
 }
 
 ; GCN-LABEL: {{^}}buffer_atomic_csub_off4_slc:
 ; GCN: buffer_atomic_csub v0, v1, s[0:3], 0 idxen offset:4 glc slc
-define amdgpu_ps void @buffer_atomic_csub_off4_slc(<4 x i32> inreg %rsrc, i32 %data, i32 %vindex) {
+define amdgpu_ps void @buffer_atomic_csub_off4_slc(ptr addrspace(8) inreg %rsrc, i32 %data, i32 %vindex) {
 main_body:
-  %ret = call i32 @llvm.amdgcn.buffer.atomic.csub(i32 %data, <4 x i32> %rsrc, i32 %vindex, i32 4, i1 1)
+  %ret = call i32 @llvm.amdgcn.buffer.atomic.csub(i32 %data, ptr addrspace(8) %rsrc, i32 %vindex, i32 4, i1 1)
   ret void
 }
 
