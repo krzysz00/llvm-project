@@ -1011,7 +1011,7 @@ def int_amdgcn_s_buffer_load : DefaultAttrsIntrinsic <
   [llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // byte offset
    llvm_i32_ty],      // cachepolicy(imm; bit 0 = glc, bit 2 = dlc)
-  [IntrNoMem, ImmArg<ArgIndex<2>>]>,
+  [IntrReadMem, ImmArg<ArgIndex<2>>]>,
   AMDGPURsrcIntrinsic<0>;
 
 class AMDGPUBufferStore<LLVMType data_ty = llvm_any_ty> : DefaultAttrsIntrinsic <

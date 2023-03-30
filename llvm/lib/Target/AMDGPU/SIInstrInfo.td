@@ -42,7 +42,7 @@ def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPUnaryOp>;
 
 def SIsbuffer_load : SDNode<"AMDGPUISD::SBUFFER_LOAD",
   SDTypeProfile<1, 3, [SDTCisVT<1, v4i32>, SDTCisVT<2, i32>, SDTCisVT<3, i32>]>,
-  [SDNPMayLoad, SDNPMemOperand]
+  [SDNPMayLoad, SDNPMemOperand, SDNPHasChain]
 >;
 
 def SIds_ordered_count : SDNode<"AMDGPUISD::DS_ORDERED_COUNT",

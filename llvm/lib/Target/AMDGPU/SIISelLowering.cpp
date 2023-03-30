@@ -954,35 +954,44 @@ unsigned SITargetLowering::getVectorTypeBreakdownForCallingConv(
     Context, CC, VT, IntermediateVT, NumIntermediates, RegisterVT);
 }
 
-static EVT memVTFromLoadIntrData(Type *Ty, unsigned MaxNumLanes) {
+static EVT memVTFromLoadIntrData(Type *Ty, const DataLayout &DL,
+                                 unsigned MaxNumLanes) {
   assert(MaxNumLanes != 0);
+  if (auto *PT = dyn_cast<PointerType>(Ty))
+    return EVT::getIntegerVT(Ty->getContext(),
+                             DL.getPointerSizeInBits(PT->getAddressSpace()));
 
   if (auto *VT = dyn_cast<FixedVectorType>(Ty)) {
     unsigned NumElts = std::min(MaxNumLanes, VT->getNumElements());
-    return EVT::getVectorVT(Ty->getContext(),
-                            EVT::getEVT(VT->getElementType()),
-                            NumElts);
+    Type *ElemTy = VT->getElementType();
+    EVT ElemTyVT = EVT::getEVT(ElemTy);
+    if (auto *PT = dyn_cast<PointerType>(ElemTy))
+      ElemTyVT = EVT::getIntegerVT(
+          Ty->getContext(), DL.getPointerSizeInBits(PT->getAddressSpace()));
+    return EVT::getVectorVT(Ty->getContext(), ElemTyVT, NumElts);
   }
 
   return EVT::getEVT(Ty);
 }
 
 // Peek through TFE struct returns to only use the data size.
-static EVT memVTFromLoadIntrReturn(Type *Ty, unsigned MaxNumLanes) {
+static EVT memVTFromLoadIntrReturn(Type *Ty, const DataLayout &DL,
+                                   unsigned MaxNumLanes) {
   auto *ST = dyn_cast<StructType>(Ty);
   if (!ST)
-    return memVTFromLoadIntrData(Ty, MaxNumLanes);
+    return memVTFromLoadIntrData(Ty, DL, MaxNumLanes);
 
   // TFE intrinsics return an aggregate type.
   assert(ST->getNumContainedTypes() == 2 &&
          ST->getContainedType(1)->isIntegerTy(32));
-  return memVTFromLoadIntrData(ST->getContainedType(0), MaxNumLanes);
+  return memVTFromLoadIntrData(ST->getContainedType(0), DL, MaxNumLanes);
 }
 
 bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                           const CallInst &CI,
                                           MachineFunction &MF,
                                           unsigned IntrID) const {
+  const DataLayout &DL = MF.getDataLayout();
   Info.flags = MachineMemOperand::MONone;
   if (CI.hasMetadata(LLVMContext::MD_invariant_load))
     Info.flags |= MachineMemOperand::MOInvariant;
@@ -1003,7 +1012,7 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
 
     Info.flags |= MachineMemOperand::MODereferenceable;
     if (ME.onlyReadsMemory()) {
-      unsigned MaxNumLanes = 4;
+      unsigned MaxNumLanes = IntrID == Intrinsic::amdgcn_s_buffer_load ? 16 : 4;
 
       if (RsrcIntr->IsImage) {
         const AMDGPU::ImageDimIntrinsicInfo *Intr
@@ -1020,7 +1029,7 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
         }
       }
 
-      Info.memVT = memVTFromLoadIntrReturn(CI.getType(), MaxNumLanes);
+      Info.memVT = memVTFromLoadIntrReturn(CI.getType(), DL, MaxNumLanes);
 
       // FIXME: What does alignment mean for an image?
       Info.opc = ISD::INTRINSIC_W_CHAIN;
@@ -1032,7 +1041,7 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
       if (RsrcIntr->IsImage) {
         unsigned DMask = cast<ConstantInt>(CI.getArgOperand(1))->getZExtValue();
         unsigned DMaskLanes = DMask == 0 ? 1 : llvm::popcount(DMask);
-        Info.memVT = memVTFromLoadIntrData(DataTy, DMaskLanes);
+        Info.memVT = memVTFromLoadIntrData(DataTy, DL, DMaskLanes);
       } else
         Info.memVT = EVT::getEVT(DataTy);
 
@@ -6749,8 +6758,9 @@ SDValue SITargetLowering::lowerImage(SDValue Op,
                            DMaskLanes, NumVDataDwords, DL);
 }
 
-SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
-                                       SDValue Offset, SDValue CachePolicy,
+SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Chain,
+                                       SDValue Rsrc, SDValue Offset,
+                                       SDValue CachePolicy,
                                        SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
 
@@ -6765,26 +6775,27 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
       VT.getStoreSize(), Alignment);
 
   if (!Offset->isDivergent()) {
-    SDValue Ops[] = {
-        Rsrc,
-        Offset, // Offset
-        CachePolicy
-    };
+    SDValue Ops[] = {Chain, Rsrc,
+                     Offset, // Offset
+                     CachePolicy};
 
     // Widen vec3 load to vec4.
     if (VT.isVector() && VT.getVectorNumElements() == 3) {
       EVT WidenedVT =
           EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(), 4);
       auto WidenedOp = DAG.getMemIntrinsicNode(
-          AMDGPUISD::SBUFFER_LOAD, DL, DAG.getVTList(WidenedVT), Ops, WidenedVT,
+          AMDGPUISD::SBUFFER_LOAD, DL, DAG.getVTList(WidenedVT, MVT::Other),
+          Ops, WidenedVT,
           MF.getMachineMemOperand(MMO, 0, WidenedVT.getStoreSize()));
       auto Subvector = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, WidenedOp,
                                    DAG.getVectorIdxConstant(0, DL));
-      return Subvector;
+      auto Merged =
+          DAG.getMergeValues({Subvector, SDValue(WidenedOp.getNode(), 1)}, DL);
+      return Merged;
     }
 
     return DAG.getMemIntrinsicNode(AMDGPUISD::SBUFFER_LOAD, DL,
-                                   DAG.getVTList(VT), Ops, VT, MMO);
+                                   DAG.getVTList(VT, MVT::Other), Ops, VT, MMO);
   }
 
   // We have a divergent offset. Emit a MUBUF buffer load instead. We can
@@ -6801,16 +6812,16 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
     LoadVT = MVT::getVectorVT(LoadVT.getScalarType(), 4);
   }
 
-  SDVTList VTList = DAG.getVTList({LoadVT, MVT::Glue});
+  SDVTList VTList = DAG.getVTList({LoadVT, MVT::Other});
   SDValue Ops[] = {
-      DAG.getEntryNode(),                               // Chain
-      Rsrc,                                             // rsrc
-      DAG.getConstant(0, DL, MVT::i32),                 // vindex
-      {},                                               // voffset
-      {},                                               // soffset
-      {},                                               // offset
-      CachePolicy,                                      // cachepolicy
-      DAG.getTargetConstant(0, DL, MVT::i1),            // idxen
+      Chain,
+      Rsrc,                                  // rsrc
+      DAG.getConstant(0, DL, MVT::i32),      // vindex
+      {},                                    // voffset
+      {},                                    // soffset
+      {},                                    // offset
+      CachePolicy,                           // cachepolicy
+      DAG.getTargetConstant(0, DL, MVT::i1), // idxen
   };
 
   // Use the alignment to ensure that the required offsets will fit into the
@@ -6819,14 +6830,21 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
                    NumLoads > 1 ? Align(16 * NumLoads) : Align(4));
 
   uint64_t InstOffset = cast<ConstantSDNode>(Ops[5])->getZExtValue();
+
   for (unsigned i = 0; i < NumLoads; ++i) {
     Ops[5] = DAG.getTargetConstant(InstOffset + 16 * i, DL, MVT::i32);
     Loads.push_back(getMemIntrinsicNode(AMDGPUISD::BUFFER_LOAD, DL, VTList, Ops,
                                         LoadVT, MMO, DAG));
   }
 
-  if (NumElts == 8 || NumElts == 16)
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Loads);
+  if (NumElts == 8 || NumElts == 16) {
+    SDValue Result = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Loads);
+    SmallVector<SDValue> Chains;
+    for (SDValue Load : Loads)
+      Chains.emplace_back(Load.getNode(), 1);
+    SDValue NewChain = DAG.getTokenFactor(DL, Chains);
+    return DAG.getMergeValues({Result, NewChain}, DL);
+  }
 
   return Loads[0];
 }
@@ -7016,13 +7034,6 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::amdgcn_wavefrontsize:
     return DAG.getConstant(MF.getSubtarget<GCNSubtarget>().getWavefrontSize(),
                            SDLoc(Op), MVT::i32);
-  case Intrinsic::amdgcn_s_buffer_load: {
-    unsigned CPol = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-    if (CPol & ~AMDGPU::CPol::ALL)
-      return Op;
-    return lowerSBuffer(VT, DL, Op.getOperand(1), Op.getOperand(2), Op.getOperand(3),
-                        DAG);
-  }
   case Intrinsic::amdgcn_fdiv_fast:
     return lowerFDIV_FAST(Op, DAG);
   case Intrinsic::amdgcn_sin:
@@ -7386,6 +7397,16 @@ SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
 
     return DAG.getMemIntrinsicNode(Opc, SDLoc(Op), M->getVTList(), Ops,
                                    M->getMemoryVT(), M->getMemOperand());
+  }
+  case Intrinsic::amdgcn_s_buffer_load: {
+    unsigned CPol = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
+    if (CPol & ~AMDGPU::CPol::ALL)
+      return Op;
+    SDValue Chain = Op->getOperand(0);
+    EVT VT = Op->getValueType(0);
+    SDValue Rsrc = Op.getOperand(2);
+    return lowerSBuffer(VT, DL, Chain, Rsrc, Op.getOperand(3), Op.getOperand(4),
+                        DAG);
   }
   case Intrinsic::amdgcn_buffer_load:
   case Intrinsic::amdgcn_buffer_load_format: {

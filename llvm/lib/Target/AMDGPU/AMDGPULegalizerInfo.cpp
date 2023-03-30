@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsR600.h"
@@ -5277,11 +5278,11 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
   LegalizerHelper &Helper, MachineInstr &MI) const {
   MachineIRBuilder &B = Helper.MIRBuilder;
   GISelChangeObserver &Observer = Helper.Observer;
+  MachineFunction &MF = B.getMF();
 
   Register Dst = MI.getOperand(0).getReg();
   LLT Ty = B.getMRI()->getType(Dst);
   unsigned Size = Ty.getSizeInBits();
-  MachineFunction &MF = B.getMF();
 
   Observer.changingInstr(MI);
 
@@ -5298,16 +5299,14 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
   MI.setDesc(B.getTII().get(AMDGPU::G_AMDGPU_S_BUFFER_LOAD));
   MI.removeOperand(1); // Remove intrinsic ID
 
-  // FIXME: When intrinsic definition is fixed, this should have an MMO already.
-  // TODO: Should this use datalayout alignment?
-  const unsigned MemSize = (Size + 7) / 8;
-  const Align MemAlign(4);
-  MachineMemOperand *MMO = MF.getMachineMemOperand(
-      MachinePointerInfo(),
-      MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
-          MachineMemOperand::MOInvariant,
-      MemSize, MemAlign);
-  MI.addMemOperand(MF, MMO);
+  MachineMemOperand *MMO = *MI.memoperands_begin();
+  MMO->setFlags(MMO->getFlags() | MachineMemOperand::MOInvariant);
+
+  // TODO: Consider using the alignment of the underlying data type here.
+  const Align AssertedAlign(4);
+  MachineMemOperand *NewAlignMMO = MF.getMachineMemOperand(
+      MMO->getPointerInfo(), MMO->getFlags(), MMO->getSize(), AssertedAlign);
+  MMO->refineAlignment(NewAlignMMO);
 
   // There are no 96-bit result scalar loads, but widening to 128-bit should
   // always be legal. We may need to restore this to a 96-bit result if it turns

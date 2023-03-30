@@ -1363,11 +1363,12 @@ bool AMDGPURegisterBankInfo::applyMappingSBufferLoad(
   // can, but we need to track an MMO for that.
   const unsigned MemSize = (Ty.getSizeInBits() + 7) / 8;
   const Align MemAlign(4); // FIXME: ABI type alignment?
+  MachineMemOperand *OrigMMO = *MI.memoperands_begin();
   MachineMemOperand *BaseMMO = MF.getMachineMemOperand(
-    MachinePointerInfo(),
-    MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
-    MachineMemOperand::MOInvariant,
-    MemSize, MemAlign);
+      OrigMMO->getPointerInfo(),
+      MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
+          MachineMemOperand::MOInvariant,
+      MemSize, MemAlign);
   if (MMOOffset != 0)
     BaseMMO = MF.getMachineMemOperand(BaseMMO, MMOOffset, MemSize);
 

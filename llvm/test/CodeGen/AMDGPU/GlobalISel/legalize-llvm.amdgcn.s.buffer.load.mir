@@ -17,7 +17,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[AMDGPU_S_BUFFER_LOAD]](s32)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(s32) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s32), align 4)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -39,7 +39,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BUILD_VECTOR]](<3 x s32>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<3 x s32>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<3 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s96), align 1)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -62,7 +62,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BITCAST]](<3 x p3>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<3 x p3>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<3 x p3>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s96), align 1)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -85,7 +85,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BITCAST]](<6 x s16>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<6 x s16>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<6 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s96), align 1)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -101,13 +101,13 @@ body:             |
     ; GCN-NEXT: {{  $}}
     ; GCN-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     ; GCN-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; GCN-NEXT: [[AMDGPU_S_BUFFER_LOAD:%[0-9]+]]:_(<8 x s32>) = G_AMDGPU_S_BUFFER_LOAD [[COPY]](<4 x s32>), [[C]](s32), 0 :: (dereferenceable invariant load (s192), align 4)
+    ; GCN-NEXT: [[AMDGPU_S_BUFFER_LOAD:%[0-9]+]]:_(<8 x s32>) = G_AMDGPU_S_BUFFER_LOAD [[COPY]](<4 x s32>), [[C]](s32), 0 :: (dereferenceable invariant load (s192), align 8)
     ; GCN-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32), [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32), [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AMDGPU_S_BUFFER_LOAD]](<8 x s32>)
     ; GCN-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<6 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV1]](s32), [[UV2]](s32), [[UV3]](s32), [[UV4]](s32), [[UV5]](s32)
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BUILD_VECTOR]](<6 x s32>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<6 x s32>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<6 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s192), align 8)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -129,7 +129,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BUILD_VECTOR]](<3 x s64>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<3 x s64>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<3 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s192), align 4)
     S_ENDPGM 0, implicit %2
 
 ...
@@ -194,7 +194,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[CONCAT_VECTORS]](<12 x s16>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<12 x s8>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<12 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s96), align 4)
     %3:_(<12 x s16>) = G_ANYEXT %2
     S_ENDPGM 0, implicit %3
 
@@ -217,7 +217,7 @@ body:             |
     ; GCN-NEXT: S_ENDPGM 0, implicit [[BUILD_VECTOR]](<3 x s32>)
     %0:_(<4 x s32>) = COPY $sgpr0_sgpr1_sgpr2_sgpr3
     %1:_(s32) = G_CONSTANT i32 0
-    %2:_(<3 x s32>) = G_INTRINSIC intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0
+    %2:_(<3 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.amdgcn.s.buffer.load), %0, %1, 0 :: (dereferenceable invariant load (s96), align 4)
     S_ENDPGM 0, implicit %2
 
 ...

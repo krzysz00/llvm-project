@@ -44,7 +44,7 @@ body:             |
     %1:_(s32) = COPY $sgpr0
     %2:vgpr(s32) = G_CONSTANT i32 256
     %3:_(s32) = G_ADD %1, %2
-    %4:_(s32) = G_AMDGPU_S_BUFFER_LOAD %0, %3, 0
+    %4:_(s32) = G_AMDGPU_S_BUFFER_LOAD %0, %3, 0 :: (dereferenceable invariant load (s32))
     S_ENDPGM 0, implicit %4
 
 ...
@@ -85,7 +85,7 @@ body:             |
     %1:_(s32) = COPY $vgpr0
     %2:_(s32) = G_CONSTANT i32 -60
     %3:_(s32) = G_ADD %1, %2
-    %4:_(s32) = G_AMDGPU_S_BUFFER_LOAD %0, %3, 0
+    %4:_(s32) = G_AMDGPU_S_BUFFER_LOAD %0, %3, 0 :: (dereferenceable invariant load (s32))
     S_ENDPGM 0, implicit %4
 
 ...
