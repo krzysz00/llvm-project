@@ -1033,6 +1033,10 @@ while (true) {{
       emitVerifier(namedAttr.attr, namedAttr.name, getVarName(namedAttr.name));
 }
 
+static void genPropertyVerifier(
+    const OpOrAdaptorHelper &emitHelper, FmtContext &ctx, MethodBody &body,
+    const StaticVerifierFunctionEmitter &staticVerifierEmitter) {}
+
 /// Include declarations specified on NativeTrait
 static std::string formatExtraDeclarations(const Operator &op) {
   SmallVector<StringRef> extraDeclarations;
