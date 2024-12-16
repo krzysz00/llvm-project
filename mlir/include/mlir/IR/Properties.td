@@ -370,7 +370,6 @@ class ConfinedProperty<Property p, Pred pred, string newSummary = "">
   let predicate = !if(!initialized(p.predicate), And<[p.predicate, pred]>, pred);
   let baseProperty = p;
   // Keep up to date with `Property` above.
-  let summary = p.summary # !if(!empty(p.summary), "", " ") # extraSummary;
   let description = p.description;
   let storageType = p.storageType;
   let interfaceType = p.interfaceType;
@@ -415,8 +414,8 @@ class _makeChildWrapperPred<string prefix, Property wrappedProp, string suffix> 
     !if(!initialized(wrappedProp.predicate),
       Concat<
         prefix # "[]("
-          # wrappedProp.storageType # "& baseStore) -> bool { return []("
-          # wrappedProp.interfaceType # "baseIface) -> bool { return (",
+          # "const " # wrappedProp.storageType # "& baseStore) -> bool { return []("
+          # wrappedProp.interfaceType # " baseIface) -> bool { return (",
         SubstLeaves<"$_self", "baseIface", wrappedProp.predicate>,
         "); }(" # !subst("$_storage", "baseStore", wrappedProp.convertFromStorage)
           # "); }" # suffix
@@ -428,9 +427,9 @@ class _makeChildWrapperPred<string prefix, Property wrappedProp, string suffix> 
 /// though subclasses can override this, as is the case with IntArrayAttr below.
 /// Those wishing to use a non-default number of SmallVector elements should
 /// subclass `ArrayProperty`.
-class ArrayProperty<Property elem = Property<>, string desc = ""> :
-  Property<"::llvm::SmallVector<" # elem.storageType # ">", desc> {
-  let summary = "array of " # elem.summary;
+class ArrayProperty<Property elem = Property<>, string newSummary = ""> :
+  Property<"::llvm::SmallVector<" # elem.storageType # ">",
+    !if(!empty(newSummary), "array of " # elem.summary, newSummary)> {
   let interfaceType = "::llvm::ArrayRef<" # elem.storageType # ">";
   let convertFromStorage = "::llvm::ArrayRef<" # elem.storageType # ">{$_storage}";
   let assignToStorage = "$_storage.assign($_value.begin(), $_value.end())";
@@ -546,8 +545,8 @@ class ArrayProperty<Property elem = Property<>, string desc = ""> :
     }]);
 }
 
-class IntArrayProperty<string storageTypeParam = "", string desc = ""> :
-    ArrayProperty<IntProperty<storageTypeParam, desc>> {
+class IntArrayProperty<Property elem, string newSummary=""> :
+    ArrayProperty<elem, newSummary> {
   // Bring back the trivial conversions we don't get in the general case.
   let convertFromAttribute = [{
     return convertFromAttribute($_storage, $_attr, $_diag);
@@ -636,9 +635,7 @@ class OptionalProperty<Property p, bit canDelegateParsing = 1>
 
   let predicate = !if(!initialized(p.predicate),
     Or<[CPred<"!$_self.has_value()">,
-      !if(hasTrivialStorage,
-        SubstLeaves<"$_self", "(*($_self))", p.predicate>,
-        _makeChildWrapperPred<"", p, "($_self.value())">.ret)]>,
+        SubstLeaves<"$_self", "(*($_self))", p.predicate>]>,
     ?);
 
   defvar delegatedParserBegin = [{

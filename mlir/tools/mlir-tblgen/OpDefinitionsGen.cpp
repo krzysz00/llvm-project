@@ -1053,7 +1053,7 @@ static void genPropertyVerifier(const OpOrAdaptorHelper &emitHelper,
   // {3}: Property description.
   const char *const verifyProperty = R"(
   if (!({0}))
-    return {1}"property '{2}' failed to satiisfy constraint: {4}");
+    return {1}"property '{2}' failed to satiisfy constraint: {3}");
 )";
 
   // Prefix variables with `tblgen_` to avoid hiding the attribute accessor.
@@ -1081,7 +1081,8 @@ static void genPropertyVerifier(const OpOrAdaptorHelper &emitHelper,
     body << formatv(fetchProperty, varName, getterName,
                     prop.prop.getInterfaceType());
     body << formatv(verifyProperty, tgfmt(rawCondition, &ctx.withSelf(varName)),
-                    varName, prop.name, emitHelper.emitErrorPrefix());
+                    emitHelper.emitErrorPrefix(), prop.name,
+                    prop.prop.getSummary());
   }
   body.unindent();
 }
