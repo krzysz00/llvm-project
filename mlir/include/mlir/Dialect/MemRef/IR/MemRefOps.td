@@ -11,6 +11,7 @@
 
 include "mlir/Dialect/Arith/IR/ArithBase.td"
 include "mlir/Dialect/MemRef/IR/MemRefBase.td"
+include "mlir/Dialect/MemRef/IR/MemoryAccessOpInterfaces.td"
 include "mlir/Interfaces/CastInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/CopyOpInterface.td"
@@ -1022,7 +1023,8 @@ def GenericAtomicRMWOp : MemRef_Op<"generic_atomic_rmw", [
       SingleBlockImplicitTerminator<"AtomicYieldOp">,
       TypesMatchWith<"result type matches element type of memref",
                      "memref", "result",
-                     "::llvm::cast<MemRefType>($_self).getElementType()">
+                     "::llvm::cast<MemRefType>($_self).getElementType()">,
+      DeclareOpInterfaceMethods<IndexedAccessOpInterface>,
     ]> {
   let summary = "atomic read-modify-write operation with a region";
   let description = [{
@@ -1196,7 +1198,8 @@ def LoadOp : MemRef_Op<"load",
                      "::llvm::cast<MemRefType>($_self).getElementType()">,
       MemRefsNormalizable,
       DeclareOpInterfaceMethods<PromotableMemOpInterface>,
-      DeclareOpInterfaceMethods<DestructurableAccessorOpInterface>]> {
+      DeclareOpInterfaceMethods<DestructurableAccessorOpInterface>,
+      DeclareOpInterfaceMethods<IndexedAccessOpInterface>]> {
   let summary = "load operation";
   let description = [{
     The `load` op reads an element from a memref at the specified indices.
@@ -1332,7 +1335,9 @@ def MemRef_MemorySpaceCastOp : MemRef_Op<"memory_space_cast", [
 // PrefetchOp
 //===----------------------------------------------------------------------===//
 
-def MemRef_PrefetchOp : MemRef_Op<"prefetch"> {
+def MemRef_PrefetchOp : MemRef_Op<"prefetch", [
+      DeclareOpInterfaceMethods<IndexedAccessOpInterface, ["getAccessedType"]>
+    ]> {
   let summary = "prefetch operation";
   let description = [{
     The "prefetch" op prefetches data from a memref location described with
@@ -1932,7 +1937,8 @@ def MemRef_StoreOp : MemRef_Op<"store",
                      "::llvm::cast<MemRefType>($_self).getElementType()">,
       MemRefsNormalizable,
       DeclareOpInterfaceMethods<PromotableMemOpInterface>,
-      DeclareOpInterfaceMethods<DestructurableAccessorOpInterface>]> {
+      DeclareOpInterfaceMethods<DestructurableAccessorOpInterface>,
+      DeclareOpInterfaceMethods<IndexedAccessOpInterface>]> {
   let summary = "store operation";
   let description = [{
     The `store` op stores an element into a memref at the specified indices.
@@ -2398,7 +2404,8 @@ def AtomicRMWOp : MemRef_Op<"atomic_rmw", [
       AllTypesMatch<["value", "result"]>,
       TypesMatchWith<"value type matches element type of memref",
                      "memref", "value",
-                     "::llvm::cast<MemRefType>($_self).getElementType()">
+                     "::llvm::cast<MemRefType>($_self).getElementType()">,
+      DeclareOpInterfaceMethods<IndexedAccessOpInterface>
     ]> {
   let summary = "atomic read-modify-write operation";
   let description = [{
