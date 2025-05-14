@@ -2134,6 +2134,12 @@ def Vector_GatherOp :
     during progressively lowering to bring other memory operations closer to
     hardware ISA support for a gather.
 
+    Note that if the base argument is not contiguous in memory (for example,
+    it is the result of a `tensor.extract` or a `memref.subview`), the entries
+    of `index_vec` must respect the strieds in the underlying memory and are
+    applied as pure 1-D offsets and are not decomposed in order to apply
+    the strides on the base.
+
     Examples:
 
     ```mlir
@@ -2201,6 +2207,12 @@ def Vector_ScatterOp :
     hardware ISA support for a scatter. The semantics of the operation closely
     correspond to those of the `llvm.masked.scatter`
     [intrinsic](https://llvm.org/docs/LangRef.html#llvm-masked-scatter-intrinsics).
+
+    Note that if the base argument is not contiguous in memory (for example,
+    it is the result of a `tensor.extract` or a `memref.subview`), the entries
+    of `index_vec` must respect the strieds in the underlying memory and are
+    applied as pure 1-D offsets and are not decomposed in order to apply
+    the strides on the base.
 
     Examples:
 
