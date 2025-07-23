@@ -1815,6 +1815,8 @@ def Vector_LoadOp : Vector_Op<"load", [
     memory at an address aligned to this boundary. Violations may lead to
     architecture-specific faults or performance penalties.
     A value of 0 indicates no specific alignment requirement.
+
+    Implements IndexedAccessOpInterface.
   }];
 
   let arguments = (ins Arg<AnyMemRef, "the reference to load from",
@@ -1931,6 +1933,8 @@ def Vector_StoreOp : Vector_Op<"store", [
     memory at an address aligned to this boundary. Violations may lead to
     architecture-specific faults or performance penalties.
     A value of 0 indicates no specific alignment requirement.
+
+    Implements IndexedAccessOpInterface.
   }];
 
   let arguments = (ins
@@ -2003,6 +2007,8 @@ def Vector_MaskedLoadOp :
     closely correspond to those of the `llvm.masked.load`
     [intrinsic](https://llvm.org/docs/LangRef.html#llvm-masked-load-intrinsics).
 
+    Implements IndexedAccessOpInterface.
+
     Examples:
 
     ```mlir
@@ -2064,6 +2070,8 @@ def Vector_MaskedStoreOp :
     hardware ISA support for a masked store. The semantics of the operation
     closely correspond to those of the `llvm.masked.store`
     [intrinsic](https://llvm.org/docs/LangRef.html#llvm-masked-store-intrinsics).
+
+    Implements IndexedAccessOpInterface.
 
     Examples:
 
@@ -2140,6 +2148,8 @@ def Vector_GatherOp :
     applied as pure 1-D offsets and are not decomposed in order to apply
     the strides on the base.
 
+    Implements IndexedAccessOpInterface.
+
     Examples:
 
     ```mlir
@@ -2214,6 +2224,8 @@ def Vector_ScatterOp :
     applied as pure 1-D offsets and are not decomposed in order to apply
     the strides on the base.
 
+    Implements IndexedAccessOpInterface.
+
     Examples:
 
     ```mlir
@@ -2278,6 +2290,8 @@ def Vector_ExpandLoadOp :
     [intrinsic](https://llvm.org/docs/LangRef.html#llvm-masked-expandload-intrinsics).
 
     Note, at the moment this Op is only available for fixed-width vectors.
+
+    Implements IndexedAccessOpInterface.
 
     Examples:
 
@@ -2346,6 +2360,8 @@ def Vector_CompressStoreOp :
     [intrinsic](https://llvm.org/docs/LangRef.html#llvm-masked-compressstore-intrinsics).
 
     Note, at the moment this Op is only available for fixed-width vectors.
+
+    Implements IndexedAccessOpInterface.
 
     Examples:
 
