@@ -1179,7 +1179,7 @@ def MemRef_GlobalOp : MemRef_Op<"global", [Symbol]> {
                        MemRefTypeAttr:$type,
                        OptionalAttr<AnyAttr>:$initial_value,
                        UnitAttr:$constant,
-                       OptionalAttr<I64Attr>:$alignment);
+                       OptionalAttr<IntValidAlignment<I64Attr>>:$alignment);
 
   let assemblyFormat = [{
        ($sym_visibility^)?
@@ -1248,8 +1248,7 @@ def LoadOp : MemRef_Op<"load",
                            [MemRead]>:$memref,
                        Variadic<Index>:$indices,
                        DefaultValuedOptionalAttr<BoolAttr, "false">:$nontemporal,
-                       ConfinedAttr<OptionalAttr<I64Attr>,
-                                    [AllAttrOf<[IntPositive, IntPowerOf2]>]>:$alignment);
+                       OptionalAttr<IntValidAlignment<I64Attr>>:$alignment);
 
   let builders = [
     OpBuilder<(ins "Value":$memref,
@@ -1985,8 +1984,7 @@ def MemRef_StoreOp : MemRef_Op<"store",
                            [MemWrite]>:$memref,
                        Variadic<Index>:$indices,
                        DefaultValuedOptionalAttr<BoolAttr, "false">:$nontemporal,
-                       ConfinedAttr<OptionalAttr<I64Attr>,
-                                    [AllAttrOf<[IntPositive, IntPowerOf2]>]>:$alignment);
+                       OptionalAttr<IntValidAlignment<I64Attr>>:$alignment);
 
   let builders = [
     OpBuilder<(ins "Value":$valueToStore,
