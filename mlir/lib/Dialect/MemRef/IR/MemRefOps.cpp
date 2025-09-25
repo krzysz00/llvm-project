@@ -1299,12 +1299,19 @@ LogicalResult DmaStartOp::fold(FoldAdaptor adaptor,
   return foldMemRefCast(*this);
 }
 
-Operation *DmaStartOp::cloneWithReindex(RewriterBase &rewriter, Value newSrc,
-                                        ValueRange newSrcIndices, Value newDst,
-                                        ValueRange newDstIndices) {
-  return rewriter.create<DmaStartOp>(
-      getLoc(), newSrc, newSrcIndices, newDst, newDstIndices, getNumElements(),
-      getTagMemRef(), getTagIndices(), getStride(), getNumElementsPerStride());
+void DmaStartOp::setMemrefsAndIndices(RewriterBase &rewriter, Value newSrc,
+                                      ValueRange newSrcIndices, Value newDst,
+                                      ValueRange newDstIndices) {
+  /// dma_start has special handling for variadic rank
+  SmallVector<Value> newOperands;
+  newOperands.push_back(newSrc);
+  llvm::append_range(newOperands, newSrcIndices);
+  newOperands.push_back(newDst);
+  llvm::append_range(newOperands, newDstIndices);
+  newOperands.push_back(getTagMemRef());
+  llvm::append_range(newOperands, getTagIndices());
+
+  rewriter.modifyOpInPlace(*this, [&]() { (*this)->setOperands(newOperands); });
 }
 
 // ---------------------------------------------------------------------------
@@ -1528,15 +1535,13 @@ void GenericAtomicRMWOp::print(OpAsmPrinter &p) {
   p.printOptionalAttrDict((*this)->getAttrs());
 }
 
-Operation *GenericAtomicRMWOp::cloneWithReindex(RewriterBase &rewriter,
-                                                Value newMemref,
-                                                ValueRange newIndices) {
-  auto result = cast<GenericAtomicRMWOp>(rewriter.clone(**this));
-  rewriter.modifyOpInPlace(result, [&]() {
-    result.getMemrefMutable().assign(newMemref);
-    result.getIndicesMutable().assign(newIndices);
+std::optional<SmallVector<Value>> GenericAtomicRMWOp::updateMemrefAndIndices(
+    RewriterBase &rewriter, Value newMemref, ValueRange newIndices) {
+  rewriter.modifyOpInPlace(*this, [&]() {
+    getMemrefMutable().assign(newMemref);
+    getIndicesMutable().assign(newIndices);
   });
-  return result;
+  return std::nullopt;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1689,10 +1694,14 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
   return OpFoldResult();
 }
 
-Operation *LoadOp::cloneWithReindex(RewriterBase &rewriter, Value newMemref,
-                                    ValueRange newIndices) {
-  return rewriter.create<LoadOp>(getLoc(), newMemref, newIndices,
-                                 getNontemporal());
+std::optional<SmallVector<Value>>
+LoadOp::updateMemrefAndIndices(RewriterBase &rewriter, Value newMemref,
+                               ValueRange newIndices) {
+  rewriter.modifyOpInPlace(*this, [&]() {
+    getMemrefMutable().assign(newMemref);
+    getIndicesMutable().assign(newIndices);
+  });
+  return std::nullopt;
 }
 
 FailureOr<std::optional<SmallVector<Value>>>
@@ -1838,11 +1847,14 @@ LogicalResult PrefetchOp::fold(FoldAdaptor adaptor,
   return foldMemRefCast(*this);
 }
 
-Operation *PrefetchOp::cloneWithReindex(RewriterBase &rewriter, Value newMemref,
-                                        ValueRange newIndices) {
-  return rewriter.create<PrefetchOp>(getLoc(), newMemref, newIndices,
-                                     getIsWriteAttr(), getLocalityHintAttr(),
-                                     getIsDataCacheAttr());
+std::optional<SmallVector<Value>>
+PrefetchOp::updateMemrefAndIndices(RewriterBase &rewriter, Value newMemref,
+                                   ValueRange newIndices) {
+  rewriter.modifyOpInPlace(*this, [&]() {
+    getMemrefMutable().assign(newMemref);
+    getIndicesMutable().assign(newIndices);
+  });
+  return std::nullopt;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2779,10 +2791,14 @@ LogicalResult StoreOp::fold(FoldAdaptor adaptor,
   return foldMemRefCast(*this, getValueToStore());
 }
 
-Operation *StoreOp::cloneWithReindex(RewriterBase &rewriter, Value newMemref,
-                                     ValueRange newIndices) {
-  return rewriter.create<StoreOp>(getLoc(), getValue(), newMemref, newIndices,
-                                  getNontemporal());
+std::optional<SmallVector<Value>>
+StoreOp::updateMemrefAndIndices(RewriterBase &rewriter, Value newMemref,
+                                ValueRange newIndices) {
+  rewriter.modifyOpInPlace(*this, [&]() {
+    getMemrefMutable().assign(newMemref);
+    getIndicesMutable().assign(newIndices);
+  });
+  return std::nullopt;
 }
 
 FailureOr<std::optional<SmallVector<Value>>>
@@ -3750,11 +3766,14 @@ OpFoldResult AtomicRMWOp::fold(FoldAdaptor adaptor) {
   return OpFoldResult();
 }
 
-Operation *AtomicRMWOp::cloneWithReindex(RewriterBase &rewriter,
-                                         Value newMemref,
-                                         ValueRange newIndices) {
-  return rewriter.create<AtomicRMWOp>(getLoc(), getKind(), getValue(),
-                                      newMemref, newIndices);
+std::optional<SmallVector<Value>>
+AtomicRMWOp::updateMemrefAndIndices(RewriterBase &rewriter, Value newMemref,
+                                    ValueRange newIndices) {
+  rewriter.modifyOpInPlace(*this, [&]() {
+    getMemrefMutable().assign(newMemref);
+    getIndicesMutable().assign(newIndices);
+  });
+  return std::nullopt;
 }
 
 FailureOr<std::optional<SmallVector<Value>>>
