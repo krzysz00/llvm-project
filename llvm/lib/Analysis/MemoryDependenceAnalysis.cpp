@@ -247,8 +247,6 @@ MemDepResult MemoryDependenceResults::getCallDependencyFrom(
     // If we could not obtain a pointer for the instruction and the instruction
     // touches memory then assume that this is a dependency.
     if (isModOrRefSet(MR)) {
-      if (IsInvariantLoad)
-        continue;
       return MemDepResult::getClobber(Inst);
     }
   }
