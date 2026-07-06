@@ -12207,8 +12207,7 @@ as the ``MOVNT`` instruction on x86.
 
 The optional ``!invariant.load`` metadata must reference a single
 metadata name ``<empty_node>`` corresponding to a metadata node with no
-entries. See ``invariant.load`` metadata
-:ref:`invariant.load <md_invariant.load>`.
+entries. See :ref:`invariant.load  <md_invariant.load>` metadata.
 
 The optional ``!invariant.group`` metadata must reference a single metadata name
  ``<empty_node>`` corresponding to a metadata node with no entries.
