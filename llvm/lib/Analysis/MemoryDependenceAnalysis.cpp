@@ -246,9 +246,8 @@ MemDepResult MemoryDependenceResults::getCallDependencyFrom(
 
     // If we could not obtain a pointer for the instruction and the instruction
     // touches memory then assume that this is a dependency.
-    if (isModOrRefSet(MR)) {
+    if (isModOrRefSet(MR))
       return MemDepResult::getClobber(Inst);
-    }
   }
 
   // No dependence found.  If this is the entry block of the function, it is
