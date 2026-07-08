@@ -303,7 +303,7 @@ private:
 
 public:
   /// Construct class to support accessing the machine memory operands
-  /// of instructions in the machine function \p MF.
+  /// of instructions.
   SIMemOpAccess(const AMDGPUMachineModuleInfo &MMI, const GCNSubtarget &ST);
 
   /// \returns Load info if \p MI is a load operation, "std::nullopt" otherwise.
@@ -2586,7 +2586,7 @@ bool SIMemoryLegalizer::run(MachineFunction &MF) {
 
   const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   const Function &F = MF.getFunction();
-  SIMemOpAccess MOA(MMI.getObjFileInfo<AMDGPUMachineModuleInfo>(), ST, F);
+  SIMemOpAccess MOA(MMI.getObjFileInfo<AMDGPUMachineModuleInfo>(), ST);
   bool TgSplit = ST.hasTgSplitSupport() && AMDGPU::isTgSplitEnabled(F);
   CC = SICacheControl::create(ST, TgSplit);
 
