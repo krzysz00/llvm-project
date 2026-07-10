@@ -46,6 +46,7 @@ AMDGPU::getBaseWithConstantOffset(MachineRegisterInfo &MRI, Register Reg,
       assert(MRI.getType(Reg).getScalarSizeInBits() == 32);
       return std::pair(Reg, 0);
     }
+    // TODO: Handle G_OR used for add case
     if (mi_match(Def->getOperand(2).getReg(), MRI, m_ICst(Offset)))
       return std::pair(Def->getOperand(1).getReg(), Offset);
 

@@ -6507,11 +6507,10 @@ static bool canMoveBufferOffsetToSOffset(const GCNSubtarget &ST,
 static std::optional<uint32_t>
 getCombinedBufferSOffset(MachineRegisterInfo &MRI, Register SOffset,
                          uint32_t Offset) {
-  APInt C;
+  int64_t C;
   if (!mi_match(SOffset, MRI, m_ICst(C)))
     return std::nullopt;
-  return checkedAddUnsigned<uint32_t>(static_cast<uint32_t>(C.getZExtValue()),
-                                      Offset);
+  return checkedAddUnsigned<uint32_t>(static_cast<uint32_t>(C), Offset);
 }
 
 // The raw.(t)buffer and struct.(t)buffer intrinsics have two offset args:
@@ -6536,22 +6535,14 @@ AMDGPULegalizerInfo::splitBufferOffsets(MachineIRBuilder &B,
   // On GFX1250+, voffset and immoffset are zero-extended from 32 bits before
   // being added, so we can only safely match a 32-bit addition with no unsigned
   // overflow.
-  bool CheckNUW = ST.hasGFX1250Insts();
-  std::tie(BaseReg, ImmOffset) =
-      AMDGPU::getBaseWithConstantOffset(MRI, OrigOffset, VT, CheckNUW);
-  bool IsNUW = false;
-  if (ImmOffset) {
-    if (!BaseReg) {
-      IsNUW = true;
-    } else if (MachineInstr *OffsetDef =
-                   getDefIgnoringCopies(OrigOffset, MRI)) {
-      // Match SelectionDAG: a G_OR with a constant reaches here only when it is
-      // add-like, and such an OR satisfies the no-wrap condition.
-      IsNUW = OffsetDef->getOpcode() == TargetOpcode::G_OR ||
-              (OffsetDef->getOpcode() == TargetOpcode::G_ADD &&
-               OffsetDef->getFlag(MachineInstr::NoUWrap));
-    }
-  }
+  std::tie(BaseReg, ImmOffset) = AMDGPU::getBaseWithConstantOffset(
+      MRI, OrigOffset, VT, /*CheckNUW=*/ST.hasGFX1250Insts());
+  // Otherwise, we don't check for nuw when getting the constant offset, but we
+  // do need to re-check adds because only nuw adds can be moved to soffset.
+  bool IsNUW = true;
+  if (MachineInstr *OffsetDef = getDefIgnoringCopies(OrigOffset, MRI))
+    IsNUW = OffsetDef->getOpcode() != TargetOpcode::G_ADD ||
+            !OffsetDef->getFlag(MachineInstr::NoUWrap);
 
   // If BaseReg is a pointer, convert it to int.
   if (BaseReg && MRI.getType(BaseReg).isPointer())
