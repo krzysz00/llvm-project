@@ -1485,6 +1485,33 @@ def int_amdgcn_s_buffer_load : DefaultAttrsIntrinsic <
   [IntrNoMem, ImmArg<ArgIndex<2>>]>,
   AMDGPURsrcIntrinsic<0>;
 
+// Generate an s_buffer_load instruction, falling back to buffer_load if the offset
+// is not uniform. This operates like the s.buffer.load intrinsic, but uses a buffer
+// resource pointer (`ptr addrspace(8)`) to hold the resource (which should be
+// wave-uniform) instead of a `<4 x i32>`. Note that some architectures require
+// the offset to be aligned to the width of the type being loaded (or, in some cases
+// the shorter of that alignment and 4 bytes).
+//
+// Also note that this data is loaded via a distinct cache than typical load
+// instructions or other buffer_load operations. Therefore, the data pointed to by
+// this load *must* be invariant to avoid coherence risks. Frontends emitting
+// this intrinsic *should* mark it `!invariant.load`, and the backend may also
+// add such markings.
+def int_amdgcn_ptr_s_buffer_load : DefaultAttrsIntrinsic <
+  [llvm_any_ty],
+  [AMDGPUBufferRsrcTy, // rsrc(SGPR)
+   llvm_i32_ty,        // byte offset
+   llvm_i32_ty],       // auxiliary/cachepolicy(imm):
+                       //                bit 0 = glc, bit 1 = slc, bit 2 = dlc (gfx10/gfx11),
+                       //                bit 3 = swz, bit 4 = scc (gfx90a)
+                       //        gfx942: bit 0 = sc0, bit 1 = nt, bit 3 = swz, bit 4 = sc1
+                       //        gfx12+: bits [0-2] = th, bits [3-4] = scope,
+                       //                bit 6 = swz
+                       // Note: volatile bit is **not** permitted here.
+  [IntrArgMemOnly, IntrReadMem, ReadOnly<ArgIndex<0>>,
+   NoCapture<ArgIndex<0>>, ImmArg<ArgIndex<2>>], "", [SDNPMemOperand]>,
+  AMDGPURsrcIntrinsic<0>;
+
 // Buffer intrinsics with separate raw and struct variants.  The raw
 // variant never has an index. The struct variant always has an index, even if
 // it is const 0. A struct intrinsic with constant 0 index is different to the
