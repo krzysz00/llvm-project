@@ -5144,9 +5144,9 @@ static Constant *getLegacyStructuredGEPFlags(CallBase *CI) {
   Type *Int32Ty = Type::getInt32Ty(CI->getContext());
   unsigned NumIndices = CI->arg_size() - 1;
   SmallVector<StructuredGEPFlags> FlagValues(
-      std::max({NumIndices, 1u}),
-      NumIndices ? StructuredGEPFlags::unsignedIndex()
-                 : StructuredGEPFlags::none());
+      std::max({NumIndices, 1u}), NumIndices
+                                      ? StructuredGEPFlags::unsignedIndex()
+                                      : StructuredGEPFlags::none());
   for (auto [I, Flags] : llvm::enumerate(FlagValues)) {
     // Safety valve for malformed SGEP.
     if (!CurrentType)

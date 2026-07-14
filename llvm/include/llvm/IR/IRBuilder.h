@@ -2015,8 +2015,7 @@ public:
 
     return CreateIntrinsic(
         Intrinsic::structured_gep, {PtrBase->getType(), FlagsVec->getType()},
-        Args, {}, Name, {},
-        [&](CallInst *Output) {
+        Args, {}, Name, {}, [&](CallInst *Output) {
           Output->addParamAttr(
               0,
               Attribute::get(getContext(), Attribute::ElementType, BaseType));
