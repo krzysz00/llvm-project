@@ -13521,7 +13521,7 @@ This instruction requires several arguments:
    ```llvm
    declare void @take_byval(ptr byval(i64))
    declare void @take_ptr(ptr)
-   
+
    ; Invalid (assuming @take_ptr dereferences the pointer), because %local
    ; may be de-allocated before the call to @take_ptr.
    define void @invalid_alloca() {
@@ -13530,7 +13530,7 @@ This instruction requires several arguments:
      tail call void @take_ptr(ptr %local)
      ret void
    }
-   
+
    ; Valid, the byval attribute causes the memory allocated by %local to be
    ; copied into @take_byval's stack frame.
    define void @byval_alloca() {
@@ -13539,7 +13539,7 @@ This instruction requires several arguments:
      tail call void @take_byval(ptr byval(i64) %local)
      ret void
    }
-   
+
    ; Invalid, because @use_global_va_list uses the variadic arguments from
    ; @invalid_va_list.
    %struct.va_list = type { ptr }
@@ -13555,14 +13555,14 @@ This instruction requires several arguments:
      tail call void @use_global_va_list()
      ret void
    }
-   
+
    ; Valid, byval argument forwarded to tail call as another byval argument.
    define void @forward_byval(ptr byval(i64) %x) {
    entry:
      tail call void @take_byval(ptr byval(i64) %x)
      ret void
    }
-   
+
    ; Invalid (assuming @take_ptr dereferences the pointer), byval argument
    ; passed to tail callee as non-byval ptr.
    define void @invalid_byval(ptr byval(i64) %x) {
@@ -14924,7 +14924,7 @@ at runtime.
 A pointer to the memory location used as base for the address computation.
 
 The `source` argument must be annotated with an {ref}`elementtype <attr_elementtype>` attribute at the call-site. This attribute specifies the
-type of the element pointed to by the pointer source. This type will be
+type of the value pointed into by the pointer `source`. This type will be
 used along with the provided indices and source operand to compute a new
 pointer representing the result of a logical indexing into the basetype
 pointed to by `source`.
@@ -14960,17 +14960,32 @@ Otherwise, the flags operand must have one element per index.
 
 The `llvm.structured.gep` performs a logical traversal of the type
 `basetype` using the list of provided indices, computing the pointer
-addressing the targeted element/field assuming `source` points to a
-physically laid out `basetype`. The physical layout of the source depends
-on the target and does not necessarily match the one described by the
-datalayout.
+addressing the targeted element/field assuming `source` points to memory
+interpretable as a physically laid out `basetype` (with potentially differenig
+array lengths if permitted). The physical layout of the source depends on the
+target and does not necessarily match the one described by the datalayout.
 
 The first index determines which element/field of `basetype` is selected,
 computes the pointer to access this element/field assuming `source` points
-to the start of `basetype`.
+into memory interpretable as a `basetype`, optionally ignoring array element
+counts.
 This pointer becomes the new `source`, the current type the new
 `basetype`, and the next index is consumed until a scalar type is
 reached or all indices are consumed.
+
+Note that the interpretability requirement prohibits `source` from pointing within
+a struct or a vector, but does permit pointers in the middle of arrays. In the case
+of such a mid-array pointer, the corresponding `index` moves logically within the
+array. Unlike with normal GEP, there is no requirement that indices "overflow" to
+the next dimension - that is, `sgep [8 x [8 x i8]], ptr %source, i32 0, i32 8`
+is not necessarily the same location as
+`sgep [8 x [8 x i8]], ptr %source, i32 1, i32 0`. The indices for each axis
+in a multidimtional array *may*, but are not *required to be*, tracked separately:
+the overflow flags apply to the ultimate, target-specific tracking mechanism.
+
+Targets, such as SPIR-V, may impose the additional requirement that `source`
+point to the **beginning** of a `basetype`, but LLVM will not optimize on this
+assumption.
 
 All indices must be consumed, and it is illegal to index into a scalar type,
 meaning the maximum number of indices depends on the depth of the basetype.
