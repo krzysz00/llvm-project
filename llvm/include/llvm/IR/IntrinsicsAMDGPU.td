@@ -1473,8 +1473,10 @@ def int_amdgcn_make_buffer_rsrc : PureIntrinsic <
 
 defset list<AMDGPURsrcIntrinsic> AMDGPUBufferIntrinsics = {
 
-// Generate a buffer_load instruction that may be optimized to s_buffer_load if
-// the offset argument is uniform.
+// Legacy form of the ptr.s.buffer.load intrinsic (will be deprecated) that uses a
+// <4 x i32> vector to hold the intrinsic instead of a pointer. While it is marked
+// as not accessing memory (to enable something equivalent to invariant load
+// optimizations), it does do so.
 def int_amdgcn_s_buffer_load : DefaultAttrsIntrinsic <
   [llvm_any_ty],
   [llvm_v4i32_ty,    // rsrc(SGPR)
@@ -1490,11 +1492,10 @@ def int_amdgcn_s_buffer_load : DefaultAttrsIntrinsic <
   AMDGPURsrcIntrinsic<0>;
 
 // Generate an s_buffer_load instruction, falling back to buffer_load if the offset
-// is not uniform. This operates like the s.buffer.load intrinsic, but uses a buffer
-// resource pointer (`ptr addrspace(8)`) to hold the resource (which should be
-// wave-uniform) instead of a `<4 x i32>`. Note that some architectures require
-// the offset to be aligned to the width of the type being loaded (or, in some cases
-// the shorter of that alignment and 4 bytes).
+// is not uniform. Note that some architectures require the offset to be aligned to
+// the width of the type being loaded (or, in some cases the shorter of that
+// alignment and 4 bytes). No attempt is made to ensure this alignment requirement
+// has been satisfied during lowering.
 //
 // Also note that this data is loaded via a distinct cache than typical load
 // instructions or other buffer_load operations. Therefore, the data pointed to by
