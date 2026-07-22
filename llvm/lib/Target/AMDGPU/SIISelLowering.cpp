@@ -10755,7 +10755,7 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, EVT MemVT, SDLoc DL,
   MachineFunction &MF = DAG.getMachineFunction();
   bool HasChainResult = MMO != nullptr;
 
-  if (!MMO) {
+  if (!HasChainResult) {
     const DataLayout &DataLayout = DAG.getDataLayout();
     Align Alignment =
         DataLayout.getABITypeAlign(MemVT.getTypeForEVT(*DAG.getContext()));
@@ -10770,36 +10770,25 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, EVT MemVT, SDLoc DL,
   if (!Offset->isDivergent()) {
     SDValue Ops[] = {Chain, Rsrc, Offset, CachePolicy};
 
-    // Lower llvm.amdgcn.*s.buffer.load.(i8, u8) intrinsics. First, generate
-    // s_buffer_load_u8 for signed and unsigned load instructions. Next, DAG
-    // combiner tries to merge the s_buffer_load_u8 with a sext instruction
-    // (performSignExtendInRegCombine()) and it replaces s_buffer_load_u8 with
-    // s_buffer_load_i8.
-    if (MemVT == MVT::i8 && Subtarget->hasScalarSubwordLoads()) {
+    // Lower llvm.amdgcn.*s.buffer.load.{i,u}N intrinsics. First, generate
+    // s_buffer_load_u* for signed and unsigned load instructions. Next, DAG
+    // combiner tries to merge the s_buffer_load_uN with a sext instruction
+    // (performSignExtendInRegCombine()) and it replaces s_buffer_load_uN with
+    // s_buffer_load_iN.
+    auto HandleScalarSubwordLoads = [&](unsigned Opcode) -> SDValue {
       SDValue BufferLoad = DAG.getMemIntrinsicNode(
-          AMDGPUISD::SBUFFER_LOAD_UBYTE, DL,
-          DAG.getVTList(MVT::i32, MVT::Other), Ops, MemVT, MMO);
+          Opcode, DL, DAG.getVTList(MVT::i32, MVT::Other), Ops, MemVT, MMO);
       SDValue LoadVal = DAG.getAnyExtOrTrunc(
           DAG.getNode(ISD::TRUNCATE, DL, MemVT, BufferLoad), DL, VT);
       if (HasChainResult)
         return DAG.getMergeValues({LoadVal, BufferLoad.getValue(1)}, DL);
       return LoadVal;
-    }
+    };
+    if (MemVT == MVT::i8 && Subtarget->hasScalarSubwordLoads())
+      return HandleScalarSubwordLoads(AMDGPUISD::SBUFFER_LOAD_UBYTE);
 
-    // Lower llvm.amdgcn.s.buffer.load.{i16, u16} intrinsics. Initially, the
-    // s_buffer_load_u16 instruction is emitted for both signed and unsigned
-    // loads. Later, DAG combiner tries to combine s_buffer_load_u16 with sext
-    // and generates s_buffer_load_i16 (performSignExtendInRegCombine).
-    if (MemVT == MVT::i16 && Subtarget->hasScalarSubwordLoads()) {
-      SDValue BufferLoad = DAG.getMemIntrinsicNode(
-          AMDGPUISD::SBUFFER_LOAD_USHORT, DL,
-          DAG.getVTList(MVT::i32, MVT::Other), Ops, MemVT, MMO);
-      SDValue LoadVal = DAG.getAnyExtOrTrunc(
-          DAG.getNode(ISD::TRUNCATE, DL, MemVT, BufferLoad), DL, VT);
-      if (HasChainResult)
-        return DAG.getMergeValues({LoadVal, BufferLoad.getValue(1)}, DL);
-      return LoadVal;
-    }
+    if (MemVT == MVT::i16 && Subtarget->hasScalarSubwordLoads())
+      return HandleScalarSubwordLoads(AMDGPUISD::SBUFFER_LOAD_USHORT);
 
     // Widen vec3 load to vec4.
     if (VT.isVector() && VT.getVectorNumElements() == 3 &&

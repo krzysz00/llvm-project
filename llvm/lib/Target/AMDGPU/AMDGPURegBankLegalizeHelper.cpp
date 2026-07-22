@@ -644,9 +644,9 @@ bool RegBankLegalizeHelper::lowerSBufToBuf(MachineInstr &MI,
     NumLoads = LoadSize / 128;
     Ty = Ty.divide(NumLoads);
   }
-  MachineMemOperand *OrigMMO = *MI.memoperands_begin();
   for (int I = 0; I < NumLoads; ++I)
     LoadParts.emplace_back(MRI.createVirtualRegister({VgprRB, Ty}));
+  MachineMemOperand *OrigMMO = *MI.memoperands_begin();
   const Align Alignment = OrigMMO->getAlign();
   MachineFunction &MF = B.getMF();
   Register SOffset;
