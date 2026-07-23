@@ -51,28 +51,28 @@ define i32 @zero_index_with_load(ptr %p) {
 ; GEP with a zero index can be simplified, but SGEP cannot.
 define ptr @zero_index_struct(ptr %p) {
 ; CHECK-LABEL: @zero_index_struct(ptr %p
-; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> splat (i32 3), i32 0)
+; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> splat (i32 7), i32 0)
 ; CHECK-NEXT:    ret ptr [[SGEP]]
 ;
-  %sgep = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> <i32 3>, i32 0)
+  %sgep = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> <i32 7>, i32 0)
   ret ptr %sgep
 }
 
 define ptr @one_index_struct(ptr %p) {
 ; CHECK-LABEL: @one_index_struct(ptr %p
-; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> splat (i32 3), i32 1)
+; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> splat (i32 7), i32 1)
 ; CHECK-NEXT:    ret ptr [[SGEP]]
 ;
-  %sgep = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> <i32 3>, i32 1)
+  %sgep = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %p, <1 x i32> <i32 7>, i32 1)
   ret ptr %sgep
 }
 
 define ptr @multi_index_nested(ptr %p) {
 ; CHECK-LABEL: @multi_index_nested(
-; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.Nested) %p, <2 x i32> splat (i32 3), i32 0, i32 0)
+; CHECK-NEXT:    [[SGEP:%.*]] = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.Nested) %p, <2 x i32> splat (i32 7), i32 0, i32 0)
 ; CHECK-NEXT:    ret ptr [[SGEP]]
 ;
-  %sgep = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.Nested) %p, <2 x i32> <i32 3, i32 3>, i32 0, i32 0)
+  %sgep = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.Nested) %p, <2 x i32> <i32 7, i32 7>, i32 0, i32 0)
   ret ptr %sgep
 }
 

@@ -20,7 +20,8 @@ class StructuredGEPFlags {
   enum Flag : unsigned {
     InBoundsFlag = (1 << 0),
     NNegFlag = (1 << 1),
-    UnsignedFlag = (1 << 2),
+    FromStartFlag = (1 << 2),
+    UnsignedFlag = (1 << 3),
   };
 
   unsigned Flags;
@@ -34,6 +35,9 @@ public:
     return StructuredGEPFlags(InBoundsFlag);
   }
   static StructuredGEPFlags nneg() { return StructuredGEPFlags(NNegFlag); }
+  static StructuredGEPFlags fromStart() {
+    return StructuredGEPFlags(FromStartFlag);
+  }
   static StructuredGEPFlags unsignedIndex() {
     return StructuredGEPFlags(UnsignedFlag);
   }
@@ -45,7 +49,12 @@ public:
 
   bool isInBounds() const { return Flags & InBoundsFlag; }
   bool isNNeg() const { return Flags & NNegFlag; }
+  bool isFromStart() const { return Flags & FromStartFlag; }
   bool isUnsignedIndex() const { return Flags & UnsignedFlag; }
+  bool hasPoisonGeneratingFlags() const { return Flags & ~UnsignedFlag; }
+  StructuredGEPFlags withoutPoisonGeneratingFlags() const {
+    return StructuredGEPFlags(Flags & UnsignedFlag);
+  }
 
   bool operator==(StructuredGEPFlags Other) const {
     return Flags == Other.Flags;

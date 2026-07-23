@@ -19,7 +19,7 @@ entry:
   %0 = call token @llvm.experimental.convergence.entry()
   ; CHECK: %[[#obj_var:]] = OpFunctionParameter %[[#ptr_Outer]]
 
-  %1 = call ptr (ptr, <4 x i32>, ...) @llvm.structured.gep.p0.v4i32(ptr elementtype(%struct.Outer) %obj, <4 x i32> <i32 3, i32 5, i32 3, i32 5>, i32 0, i32 2, i32 1, i32 1)
+  %1 = call ptr (ptr, <4 x i32>, ...) @llvm.structured.gep.p0.v4i32(ptr elementtype(%struct.Outer) %obj, <4 x i32> <i32 7, i32 5, i32 7, i32 5>, i32 0, i32 2, i32 1, i32 1)
   ; CHECK: %[[#ptr_elem:]] = OpInBoundsAccessChain %[[#ptr_float]] %[[#obj_var]] %[[#]] %[[#]] %[[#]] %[[#]]
 
   %2 = load float, ptr %1, align 4

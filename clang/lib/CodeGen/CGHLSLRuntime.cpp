@@ -67,7 +67,7 @@ StructuredGEPFlags getHLSLStructuredGEPArrayIndexFlags(llvm::Type *IndexedType,
                                                        Value *Index,
                                                        bool InBounds,
                                                        bool SignedIndex) {
-  StructuredGEPFlags Flags = StructuredGEPFlags::none();
+  StructuredGEPFlags Flags = StructuredGEPFlags::fromStart();
   if (InBounds) {
     if (auto *AT = dyn_cast<llvm::ArrayType>(IndexedType)) {
       if (AT->getNumElements() != 0)
@@ -96,7 +96,8 @@ getHLSLStructuredGEPFlags(llvm::Type *BaseType, ArrayRef<Value *> Indices,
   for (auto [IndexNo, Index] : llvm::enumerate(Indices)) {
     if (auto *ST = dyn_cast<llvm::StructType>(CurrentType)) {
       Flags.push_back(StructuredGEPFlags::inBounds() |
-                      StructuredGEPFlags::nneg());
+                      StructuredGEPFlags::nneg() |
+                      StructuredGEPFlags::fromStart());
       if (auto *CI = dyn_cast<ConstantInt>(Index))
         if (CI->getZExtValue() < ST->getNumElements())
           CurrentType = ST->getElementType(CI->getZExtValue());
@@ -110,6 +111,9 @@ getHLSLStructuredGEPFlags(llvm::Type *BaseType, ArrayRef<Value *> Indices,
       CurrentType = AT->getElementType();
     else if (auto *VT = dyn_cast<llvm::VectorType>(CurrentType))
       CurrentType = VT->getElementType();
+    else if (auto *TET = dyn_cast<llvm::TargetExtType>(CurrentType);
+             TET && TET->hasProperty(llvm::TargetExtType::CanBeSGEPIndexed))
+      CurrentType = TET;
     else
       CurrentType = nullptr;
   }

@@ -6999,11 +6999,19 @@ void Verifier::visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call) {
         Check(CI, "Indexing into a struct requires a constant int", &Call);
         Check(CI->getZExtValue() < ST->getNumElements(),
               "Indexing in a struct should be inbounds", &Call);
-        Check(IndexFlags.isInBounds() && IndexFlags.isNNeg(),
-              "Indexing into a struct requires inbounds and nneg flags", &Call);
+        Check(IndexFlags.isInBounds() && IndexFlags.isNNeg() &&
+                  IndexFlags.isFromStart(),
+              "Indexing into a struct requires inbounds, nneg, and fromstart "
+              "flags",
+              &Call);
         T = ST->getElementType(CI->getZExtValue());
       } else if (auto *VT = dyn_cast<VectorType>(T)) {
         T = VT->getElementType();
+      } else if (auto *TET = dyn_cast<TargetExtType>(T);
+                 TET && TET->hasProperty(TargetExtType::CanBeSGEPIndexed)) {
+        // SGEP-indexable target extension types consume target-defined indices
+        // while remaining at the same logical type.
+        T = TET;
       } else {
         CheckFailed("Reached a non-composite type with more indices to process",
                     &Call);

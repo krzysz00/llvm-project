@@ -234,15 +234,15 @@ define void @test.structured.gep(ptr %ptr, i32 %index) {
 ; CHECK-LABEL: @test.structured.gep(
 ; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(i32) %ptr, <1 x i32> zeroinitializer)
   %no_index = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype(i32) %ptr)
-; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([4 x i32]) %ptr, <1 x i32> splat (i32 5), i32 %index)
+; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([4 x i32]) %ptr, <1 x i32> splat (i32 13), i32 %index)
   %array = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype([4 x i32]) %ptr, i32 %index)
-; CHECK: %array_with_md = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([4 x i32]) %ptr, <1 x i32> splat (i32 5), i32 %index), !annotation ![[SGEP_MD:[0-9]+]]
+; CHECK: %array_with_md = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([4 x i32]) %ptr, <1 x i32> splat (i32 13), i32 %index), !annotation ![[SGEP_MD:[0-9]+]]
   %array_with_md = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype([4 x i32]) %ptr, i32 %index), !annotation !0
-; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([0 x i32]) %ptr, <1 x i32> splat (i32 4), i32 %index)
+; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([0 x i32]) %ptr, <1 x i32> splat (i32 12), i32 %index)
   %runtime_array = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype([0 x i32]) %ptr, i32 %index)
-; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %ptr, <1 x i32> splat (i32 7), i32 1)
+; CHECK: call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.S) %ptr, <1 x i32> splat (i32 15), i32 1)
   %struct = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype(%struct.S) %ptr, i32 1)
-; CHECK: call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.RuntimeArray) %ptr, <2 x i32> <i32 7, i32 4>, i32 0, i32 %index)
+; CHECK: call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%struct.RuntimeArray) %ptr, <2 x i32> <i32 15, i32 12>, i32 0, i32 %index)
   %struct_runtime_array = call ptr (ptr, ...) @llvm.structured.gep.p0(ptr elementtype(%struct.RuntimeArray) %ptr, i32 0, i32 %index)
   ret void
 }

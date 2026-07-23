@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/Operator.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/Instructions.h"
@@ -57,6 +58,22 @@ bool Operator::hasPoisonGeneratingFlags() const {
   case Instruction::Call:
     if (auto *II = dyn_cast<IntrinsicInst>(this)) {
       switch (II->getIntrinsicID()) {
+      case Intrinsic::structured_gep: {
+        auto *SGEP = cast<StructuredGEPInst>(II);
+        SmallVector<StructuredGEPFlags, 4> IndexFlagValues =
+            SGEP->getFlagValues();
+        SmallVector<StructuredGEPFlags, 4> RequiredFlagValues =
+            SGEP->getRequiredFlagValues();
+        auto HasDroppablePoisonGeneratingFlags = [](auto Item) {
+          StructuredGEPFlags Flags = std::get<0>(Item);
+          StructuredGEPFlags RequiredFlags = std::get<1>(Item);
+          Flags = StructuredGEPFlags::fromRaw(Flags.getRaw() &
+                                              ~RequiredFlags.getRaw());
+          return Flags.hasPoisonGeneratingFlags();
+        };
+        return any_of(zip_equal(IndexFlagValues, RequiredFlagValues),
+                      HasDroppablePoisonGeneratingFlags);
+      }
       case Intrinsic::ctlz:
       case Intrinsic::cttz:
       case Intrinsic::abs:

@@ -44,6 +44,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsWebAssembly.h"
 #include "llvm/IR/LLVMContext.h"
@@ -4711,13 +4712,16 @@ static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
 
 static bool isStructuredGEPIndexableType(llvm::Type *T) {
   return isa<llvm::ArrayType>(T) || isa<llvm::StructType>(T) ||
-         isa<llvm::VectorType>(T);
+         isa<llvm::VectorType>(T) ||
+         (isa<llvm::TargetExtType>(T) &&
+          cast<llvm::TargetExtType>(T)->hasProperty(
+              llvm::TargetExtType::CanBeSGEPIndexed));
 }
 
 static llvm::StructuredGEPFlags
 getStructuredGEPArrayIndexFlags(llvm::Type *IndexedType, llvm::Value *Index,
                                 bool InBounds, bool SignedIndex) {
-  llvm::StructuredGEPFlags Flags = llvm::StructuredGEPFlags::none();
+  llvm::StructuredGEPFlags Flags = llvm::StructuredGEPFlags::fromStart();
   if (InBounds) {
     if (auto *AT = dyn_cast<llvm::ArrayType>(IndexedType)) {
       if (AT->getNumElements() != 0)
@@ -4744,7 +4748,8 @@ getStructuredGEPFlagsForIndices(llvm::Type *BaseType,
   for (llvm::Value *Index : Indices) {
     if (auto *ST = dyn_cast<llvm::StructType>(CurrentType)) {
       Flags.push_back(llvm::StructuredGEPFlags::inBounds() |
-                      llvm::StructuredGEPFlags::nneg());
+                      llvm::StructuredGEPFlags::nneg() |
+                      llvm::StructuredGEPFlags::fromStart());
       if (auto *CI = dyn_cast<llvm::ConstantInt>(Index))
         if (CI->getZExtValue() < ST->getNumElements())
           CurrentType = ST->getElementType(CI->getZExtValue());
@@ -4757,6 +4762,9 @@ getStructuredGEPFlagsForIndices(llvm::Type *BaseType,
       CurrentType = AT->getElementType();
     else if (auto *VT = dyn_cast<llvm::VectorType>(CurrentType))
       CurrentType = VT->getElementType();
+    else if (auto *TET = dyn_cast<llvm::TargetExtType>(CurrentType);
+             TET && TET->hasProperty(llvm::TargetExtType::CanBeSGEPIndexed))
+      CurrentType = TET;
     else
       CurrentType = nullptr;
   }
@@ -5804,12 +5812,13 @@ static Address emitRawAddrOfFieldStorage(CodeGenFunction &CGF, Address base,
       CGF.CGM.getTypes().getCGRecordLayout(rec).getLLVMType();
 
   if (CGF.getLangOpts().EmitLogicalPointer)
-    return RawAddress(
-        CGF.Builder.CreateStructuredGEP(StructType, base.emitRawPointer(CGF),
-                                        {CGF.Builder.getSize(idx)},
-                                        {llvm::StructuredGEPFlags::inBounds() |
-                                         llvm::StructuredGEPFlags::nneg()}),
-        base.getElementType(), base.getAlignment());
+    return RawAddress(CGF.Builder.CreateStructuredGEP(
+                          StructType, base.emitRawPointer(CGF),
+                          {CGF.Builder.getSize(idx)},
+                          {llvm::StructuredGEPFlags::inBounds() |
+                           llvm::StructuredGEPFlags::nneg() |
+                           llvm::StructuredGEPFlags::fromStart()}),
+                      base.getElementType(), base.getAlignment());
 
   if (!IsInBounds)
     return CGF.Builder.CreateConstGEP2_32(base, 0, idx, field->getName());

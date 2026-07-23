@@ -17,7 +17,7 @@ entry:
   ; CHECK: %[[#s_var:]] = OpFunctionParameter %[[#ptr_struct]]
   ; CHECK: %[[#out_var:]] = OpFunctionParameter %[[#ptr_float]]
 
-  %1 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.Simple) %s, <1 x i32> <i32 3>, i32 1)
+  %1 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%struct.Simple) %s, <1 x i32> <i32 7>, i32 1)
   ; CHECK: %[[#ptr_field:]] = OpInBoundsAccessChain %[[#ptr_float]] %[[#s_var]] %[[#idx_1]]
 
   %2 = load float, ptr %1, align 4

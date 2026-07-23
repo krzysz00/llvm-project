@@ -5134,8 +5134,8 @@ static Value *upgradeConvertIntrinsicCall(StringRef Name, CallBase *CI,
 }
 
 // Return the flags that represent the semantics of a structured GEP before
-// flags were added. Always sets `unsigned`. If the structered GEP is malformed,
-// will fill in one `unsigned` per index.
+// flags were added. Always sets `unsigned` and `fromstart`. If the structured
+// GEP is malformed, will fill in one `unsigned|fromstart` per index.
 static Constant *getLegacyStructuredGEPFlags(CallBase *CI) {
   Type *CurrentType = nullptr;
   if (CI->paramHasAttr(0, Attribute::ElementType))
@@ -5145,7 +5145,8 @@ static Constant *getLegacyStructuredGEPFlags(CallBase *CI) {
   unsigned NumIndices = CI->arg_size() - 1;
   SmallVector<StructuredGEPFlags> FlagValues(
       std::max({NumIndices, 1u}), NumIndices
-                                      ? StructuredGEPFlags::unsignedIndex()
+                                      ? StructuredGEPFlags::unsignedIndex() |
+                                            StructuredGEPFlags::fromStart()
                                       : StructuredGEPFlags::none());
   for (auto [I, Flags] : llvm::enumerate(FlagValues)) {
     // Safety valve for malformed SGEP.

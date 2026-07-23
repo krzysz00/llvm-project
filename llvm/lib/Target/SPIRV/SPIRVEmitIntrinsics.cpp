@@ -1972,6 +1972,15 @@ Instruction *SPIRVEmitIntrinsicsImpl::visitIntrinsicInst(IntrinsicInst &I) {
   if (!SGEP)
     return &I;
 
+  if (!SGEP->isFromStart()) {
+    I.getContext().emitError(
+        &I, "llvm.structured.gep requires fromstart on every index for "
+            "SPIR-V lowering");
+    I.replaceAllUsesWith(PoisonValue::get(I.getType()));
+    I.eraseFromParent();
+    return nullptr;
+  }
+
   IRBuilder<> B(I.getParent());
   B.SetInsertPoint(&I);
   SmallVector<Type *, 2> Types = {I.getType(), I.getOperand(0)->getType()};

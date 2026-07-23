@@ -5,7 +5,7 @@
 define void @too_many_indices(ptr %src) {
 entry:
 ; CHECK: Reached a non-composite type with more indices to process
-  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%S) %src, <2 x i32> <i32 3, i32 4>, i32 0, i32 0)
+  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype(%S) %src, <2 x i32> <i32 7, i32 4>, i32 0, i32 0)
   ret void
 }
 
@@ -37,16 +37,16 @@ entry:
   ret void
 }
 
-define void @amdgpu_stridemark_offset_in_structured_gep(ptr addrspace(9) %src) {
+define void @non_sgep_indexable_target_ext_offset_in_structured_gep(ptr addrspace(9) %src) {
 entry:
 ; CHECK: Reached a non-composite type with more indices to process
-  %ptr = call ptr addrspace(9) (ptr addrspace(9), <2 x i32>, ...) @llvm.structured.gep.p9.v2i32(ptr addrspace(9) elementtype([0 x target("amdgpu.stridemark")]) %src, <2 x i32> <i32 4, i32 4>, i32 0, i32 0)
+  %ptr = call ptr addrspace(9) (ptr addrspace(9), <2 x i32>, ...) @llvm.structured.gep.p9.v2i32(ptr addrspace(9) elementtype([0 x target("spirv.Sampler")]) %src, <2 x i32> <i32 4, i32 4>, i32 0, i32 0)
   ret void
 }
 
 define void @struct_access_missing_flags(ptr %src) {
 entry:
-; CHECK: Indexing into a struct requires inbounds and nneg flags
+; CHECK: Indexing into a struct requires inbounds, nneg, and fromstart flags
   %ptr = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%S) %src, <1 x i32> zeroinitializer, i32 0)
   ret void
 }

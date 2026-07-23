@@ -14,19 +14,7 @@ cbuffer CBArrays : register(b0) {
   S c4[2];
 }
 
-// CHECK-DXIL: [[CBLayout:%.*]] = type <{ <{ [1 x <{ float, target("dx.Padding", 12) }>], float }>, target("dx.Padding", 12), [2 x <4 x i32>], <{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>, target("dx.Padding", 12), <{ [1 x <{ %S, target("dx.Padding", 8) }>], %S }> }>
-// CHECK-DXIL: @CBArrays.cb = internal global target("dx.CBuffer", [[CBLayout]])
-// CHECK-DXIL: @c1 = external hidden addrspace(2) global <{ [1 x <{ float, target("dx.Padding", 12) }>], float }>, align 4
-// CHECK-DXIL: @c2 = external hidden addrspace(2) global [2 x <4 x i32>], align 4
-// CHECK-DXIL: @c3 = external hidden addrspace(2) global <{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>, align 4
-// CHECK-DXIL: @c4 = external hidden addrspace(2) global <{ [1 x <{ %S, target("dx.Padding", 8) }>], %S }>, align 1
 
-// CHECK-SPIR: [[CBLayout:%.*]] = type <{ <{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>, target("spirv.Padding", 12), [2 x <4 x i32>], <{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>, target("spirv.Padding", 12), <{ [1 x <{ %S, target("spirv.Padding", 8) }>], %S }> }>
-// CHECK-SPIR: @CBArrays.cb = internal global target("spirv.VulkanBuffer", %__cblayout_CBArrays, 2, 0) poison
-// CHECK-SPIR: @c1 = external hidden addrspace(12) global <{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>, align 4
-// CHECK-SPIR: @c2 = external hidden addrspace(12) global [2 x <4 x i32>], align 4
-// CHECK-SPIR: @c3 = external hidden addrspace(12) global <{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>, align 4
-// CHECK-SPIR: @c4 = external hidden addrspace(12) global <{ [1 x <{ %S, target("spirv.Padding", 8) }>], %S }>, align 1
 
 
 // CHECK-DXIL-LABEL: define hidden void @_Z11arr_assign1v(
@@ -129,7 +117,7 @@ void arr_assign3() {
 // CHECK-DXIL-NEXT:    [[ARR2:%.*]] = call elementtype([2 x i32]) ptr @llvm.structured.alloca.p0()
 // CHECK-DXIL-NEXT:    call void @llvm.memset.p0.i32(ptr align 4 [[ARR2]], i8 0, i32 8, i1 false)
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i32 8, i1 false)
-// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
 // CHECK-DXIL-NEXT:    ret void
 //
@@ -142,7 +130,7 @@ void arr_assign3() {
 // CHECK-SPIR-NEXT:    [[ARR2:%.*]] = call elementtype([2 x i32]) ptr @llvm.structured.alloca.p0()
 // CHECK-SPIR-NEXT:    call void @llvm.memset.p0.i64(ptr align 4 [[ARR2]], i8 0, i64 8, i1 false)
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i64 8, i1 false)
-// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 3), i64 0)
+// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 7), i64 0)
 // CHECK-SPIR-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
 // CHECK-SPIR-NEXT:    ret void
 //
@@ -164,7 +152,7 @@ void arr_assign4() {
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR3]], ptr align 4 @__const._Z11arr_assign5v.Arr3, i32 8, i1 false)
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR2]], ptr align 4 [[ARR3]], i32 8, i1 false)
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i32 8, i1 false)
-// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
 // CHECK-DXIL-NEXT:    ret void
 //
@@ -180,7 +168,7 @@ void arr_assign4() {
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR3]], ptr align 4 @__const._Z11arr_assign5v.Arr3, i64 8, i1 false)
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR2]], ptr align 4 [[ARR3]], i64 8, i1 false)
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i64 8, i1 false)
-// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 3), i64 0)
+// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARR]], <1 x i32> splat (i32 7), i64 0)
 // CHECK-SPIR-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
 // CHECK-SPIR-NEXT:    ret void
 //
@@ -200,8 +188,8 @@ void arr_assign5() {
 // CHECK-DXIL-NEXT:    [[ARR2:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR2]], ptr align 4 @__const._Z11arr_assign6v.Arr2, i32 16, i1 false)
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i32 16, i1 false)
-// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[ARRAYIDX1:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[ARRAYIDX1:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    store i32 6, ptr [[ARRAYIDX1]], align 4
 // CHECK-DXIL-NEXT:    ret void
 //
@@ -214,8 +202,8 @@ void arr_assign5() {
 // CHECK-SPIR-NEXT:    [[ARR2:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR2]], ptr align 4 @__const._Z11arr_assign6v.Arr2, i64 16, i1 false)
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i64 16, i1 false)
-// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 3), i64 0)
-// CHECK-SPIR-NEXT:    [[ARRAYIDX1:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 3), i64 0)
+// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 7), i64 0)
+// CHECK-SPIR-NEXT:    [[ARRAYIDX1:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 7), i64 0)
 // CHECK-SPIR-NEXT:    store i32 6, ptr [[ARRAYIDX1]], align 4
 // CHECK-SPIR-NEXT:    ret void
 //
@@ -234,9 +222,9 @@ void arr_assign6() {
 // CHECK-DXIL-NEXT:    [[ARR2:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR2]], ptr align 4 @__const._Z11arr_assign7v.Arr2, i32 16, i1 false)
 // CHECK-DXIL-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i32 16, i1 false)
-// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
-// CHECK-DXIL-NEXT:    [[ARRAYINIT_ELEMENT:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[ARRAYINIT_ELEMENT:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    store i32 6, ptr [[ARRAYINIT_ELEMENT]], align 4
 // CHECK-DXIL-NEXT:    ret void
 //
@@ -249,9 +237,9 @@ void arr_assign6() {
 // CHECK-SPIR-NEXT:    [[ARR2:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR2]], ptr align 4 @__const._Z11arr_assign7v.Arr2, i64 16, i1 false)
 // CHECK-SPIR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr align 4 [[ARR]], ptr align 4 [[ARR2]], i64 16, i1 false)
-// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 3), i64 0)
+// CHECK-SPIR-NEXT:    [[ARRAYIDX:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[ARR]], <1 x i32> splat (i32 7), i64 0)
 // CHECK-SPIR-NEXT:    store i32 6, ptr [[ARRAYIDX]], align 4
-// CHECK-SPIR-NEXT:    [[ARRAYINIT_ELEMENT:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 3), i64 1)
+// CHECK-SPIR-NEXT:    [[ARRAYINIT_ELEMENT:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[ARRAYIDX]], <1 x i32> splat (i32 7), i64 1)
 // CHECK-SPIR-NEXT:    store i32 6, ptr [[ARRAYINIT_ELEMENT]], align 4
 // CHECK-SPIR-NEXT:    ret void
 //
@@ -267,12 +255,12 @@ void arr_assign7() {
 // CHECK-DXIL-NEXT:  [[ENTRY:.*:]]
 // CHECK-DXIL-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-DXIL-NEXT:    [[C:%.*]] = call elementtype([2 x float]) ptr @llvm.structured.alloca.p0()
-// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ float, target("dx.Padding", 12) }>], float }>) @c1, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ float, target("dx.Padding", 12) }>], float }>) @c1, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD:%.*]] = load float, ptr addrspace(2) [[TMP1]], align 4
 // CHECK-DXIL-NEXT:    store float [[CBUF_LOAD]], ptr [[TMP2]], align 4
-// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ float, target("dx.Padding", 12) }>], float }>) @c1, <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ float, target("dx.Padding", 12) }>], float }>) @c1, <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD1:%.*]] = load float, ptr addrspace(2) [[TMP3]], align 4
 // CHECK-DXIL-NEXT:    store float [[CBUF_LOAD1]], ptr [[TMP4]], align 4
 // CHECK-DXIL-NEXT:    ret void
@@ -282,12 +270,12 @@ void arr_assign7() {
 // CHECK-SPIR-NEXT:  [[ENTRY:.*:]]
 // CHECK-SPIR-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-SPIR-NEXT:    [[C:%.*]] = call elementtype([2 x float]) ptr @llvm.structured.alloca.p0()
-// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>) @c1, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>) @c1, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD:%.*]] = load float, ptr addrspace(12) [[TMP1]], align 4
 // CHECK-SPIR-NEXT:    store float [[CBUF_LOAD]], ptr [[TMP2]], align 4
-// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>) @c1, <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ float, target("spirv.Padding", 12) }>], float }>) @c1, <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x float]) [[C]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD1:%.*]] = load float, ptr addrspace(12) [[TMP3]], align 4
 // CHECK-SPIR-NEXT:    store float [[CBUF_LOAD1]], ptr [[TMP4]], align 4
 // CHECK-SPIR-NEXT:    ret void
@@ -302,12 +290,12 @@ void arr_assign8() {
 // CHECK-DXIL-NEXT:  [[ENTRY:.*:]]
 // CHECK-DXIL-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-DXIL-NEXT:    [[C:%.*]] = call elementtype([2 x <4 x i32>]) ptr @llvm.structured.alloca.p0()
-// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD:%.*]] = load <4 x i32>, ptr addrspace(2) [[TMP1]], align 4
 // CHECK-DXIL-NEXT:    store <4 x i32> [[CBUF_LOAD]], ptr [[TMP2]], align 4
-// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD1:%.*]] = load <4 x i32>, ptr addrspace(2) [[TMP3]], align 4
 // CHECK-DXIL-NEXT:    store <4 x i32> [[CBUF_LOAD1]], ptr [[TMP4]], align 4
 // CHECK-DXIL-NEXT:    ret void
@@ -317,12 +305,12 @@ void arr_assign8() {
 // CHECK-SPIR-NEXT:  [[ENTRY:.*:]]
 // CHECK-SPIR-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-SPIR-NEXT:    [[C:%.*]] = call elementtype([2 x <4 x i32>]) ptr @llvm.structured.alloca.p0()
-// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 3), i32 0)
-// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 7), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD:%.*]] = load <4 x i32>, ptr addrspace(12) [[TMP1]], align 4
 // CHECK-SPIR-NEXT:    store <4 x i32> [[CBUF_LOAD]], ptr [[TMP2]], align 4
-// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([2 x <4 x i32>]) @c2, <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x <4 x i32>]) [[C]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD1:%.*]] = load <4 x i32>, ptr addrspace(12) [[TMP3]], align 4
 // CHECK-SPIR-NEXT:    store <4 x i32> [[CBUF_LOAD1]], ptr [[TMP4]], align 4
 // CHECK-SPIR-NEXT:    ret void
@@ -340,24 +328,24 @@ void arr_assign9() {
 // CHECK-DXIL-NEXT:  [[ENTRY:.*:]]
 // CHECK-DXIL-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-DXIL-NEXT:    [[C:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
-// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>) @c3, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP1]], <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>) @c3, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP1]], <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD:%.*]] = load i32, ptr addrspace(2) [[TMP3]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD]], ptr [[TMP4]], align 4
-// CHECK-DXIL-NEXT:    [[TMP5:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP1]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP5:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP1]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD1:%.*]] = load i32, ptr addrspace(2) [[TMP5]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD1]], ptr [[TMP6]], align 4
-// CHECK-DXIL-NEXT:    [[TMP7:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>) @c3, <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP9:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP7]], <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-DXIL-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP7:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>, target("dx.Padding", 12) }>], <{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }> }>) @c3, <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP9:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP7]], <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-DXIL-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD2:%.*]] = load i32, ptr addrspace(2) [[TMP9]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD2]], ptr [[TMP10]], align 4
-// CHECK-DXIL-NEXT:    [[TMP11:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP7]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP11:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ i32, target("dx.Padding", 12) }>], i32 }>) [[TMP7]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD3:%.*]] = load i32, ptr addrspace(2) [[TMP11]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD3]], ptr [[TMP12]], align 4
 // CHECK-DXIL-NEXT:    ret void
@@ -367,24 +355,24 @@ void arr_assign9() {
 // CHECK-SPIR-NEXT:  [[ENTRY:.*:]]
 // CHECK-SPIR-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-SPIR-NEXT:    [[C:%.*]] = call elementtype([2 x [2 x i32]]) ptr @llvm.structured.alloca.p0()
-// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>) @c3, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP1]], <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>) @c3, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP1]], <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD:%.*]] = load i32, ptr addrspace(12) [[TMP3]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD]], ptr [[TMP4]], align 4
-// CHECK-SPIR-NEXT:    [[TMP5:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP1]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP5:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP1]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP2]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD1:%.*]] = load i32, ptr addrspace(12) [[TMP5]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD1]], ptr [[TMP6]], align 4
-// CHECK-SPIR-NEXT:    [[TMP7:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>) @c3, <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP9:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP7]], <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-SPIR-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP7:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>, target("spirv.Padding", 12) }>], <{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }> }>) @c3, <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [2 x i32]]) [[C]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP9:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP7]], <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-SPIR-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD2:%.*]] = load i32, ptr addrspace(12) [[TMP9]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD2]], ptr [[TMP10]], align 4
-// CHECK-SPIR-NEXT:    [[TMP11:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP7]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP11:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ i32, target("spirv.Padding", 12) }>], i32 }>) [[TMP7]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x i32]) [[TMP8]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD3:%.*]] = load i32, ptr addrspace(12) [[TMP11]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD3]], ptr [[TMP12]], align 4
 // CHECK-SPIR-NEXT:    ret void
@@ -399,24 +387,24 @@ void arr_assign10() {
 // CHECK-DXIL-NEXT:  [[ENTRY:.*:]]
 // CHECK-DXIL-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-DXIL-NEXT:    [[C:%.*]] = call elementtype([2 x [[STRUCT_S:%.*]]]) ptr @llvm.structured.alloca.p0()
-// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ [[S:%.*]], target("dx.Padding", 8) }>], [[S]] }>) @c4, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP1:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <3 x i32>, ...) @llvm.structured.gep.p2.v3i32(ptr addrspace(2) elementtype(<{ [1 x <{ [[S:%.*]], target("dx.Padding", 8) }>], [[S]] }>) @c4, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-DXIL-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP3:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD:%.*]] = load i32, ptr addrspace(2) [[TMP3]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD]], ptr [[TMP4]], align 4
-// CHECK-DXIL-NEXT:    [[TMP5:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP5:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD1:%.*]] = load float, ptr addrspace(2) [[TMP5]], align 4
 // CHECK-DXIL-NEXT:    store float [[CBUF_LOAD1]], ptr [[TMP6]], align 4
-// CHECK-DXIL-NEXT:    [[TMP7:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ [[S]], target("dx.Padding", 8) }>], [[S]] }>) @c4, <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP9:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-DXIL-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP7:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype(<{ [1 x <{ [[S]], target("dx.Padding", 8) }>], [[S]] }>) @c4, <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP9:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-DXIL-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD2:%.*]] = load i32, ptr addrspace(2) [[TMP9]], align 4
 // CHECK-DXIL-NEXT:    store i32 [[CBUF_LOAD2]], ptr [[TMP10]], align 4
-// CHECK-DXIL-NEXT:    [[TMP11:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-DXIL-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP11:%.*]] = call ptr addrspace(2) (ptr addrspace(2), <1 x i32>, ...) @llvm.structured.gep.p2.v1i32(ptr addrspace(2) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-DXIL-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-DXIL-NEXT:    [[CBUF_LOAD3:%.*]] = load float, ptr addrspace(2) [[TMP11]], align 4
 // CHECK-DXIL-NEXT:    store float [[CBUF_LOAD3]], ptr [[TMP12]], align 4
 // CHECK-DXIL-NEXT:    ret void
@@ -426,24 +414,24 @@ void arr_assign10() {
 // CHECK-SPIR-NEXT:  [[ENTRY:.*:]]
 // CHECK-SPIR-NEXT:    [[TMP0:%.*]] = call token @llvm.experimental.convergence.entry()
 // CHECK-SPIR-NEXT:    [[C:%.*]] = call elementtype([2 x [[STRUCT_S:%.*]]]) ptr @llvm.structured.alloca.p0()
-// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ [[S:%.*]], target("spirv.Padding", 8) }>], [[S]] }>) @c4, <3 x i32> splat (i32 3), i32 0, i32 0, i32 0)
-// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP1:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <3 x i32>, ...) @llvm.structured.gep.p12.v3i32(ptr addrspace(12) elementtype(<{ [1 x <{ [[S:%.*]], target("spirv.Padding", 8) }>], [[S]] }>) @c4, <3 x i32> splat (i32 7), i32 0, i32 0, i32 0)
+// CHECK-SPIR-NEXT:    [[TMP2:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP3:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP4:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD:%.*]] = load i32, ptr addrspace(12) [[TMP3]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD]], ptr [[TMP4]], align 4
-// CHECK-SPIR-NEXT:    [[TMP5:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP5:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP1]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP6:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP2]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD1:%.*]] = load float, ptr addrspace(12) [[TMP5]], align 4
 // CHECK-SPIR-NEXT:    store float [[CBUF_LOAD1]], ptr [[TMP6]], align 4
-// CHECK-SPIR-NEXT:    [[TMP7:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ [[S]], target("spirv.Padding", 8) }>], [[S]] }>) @c4, <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP9:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 3), i32 0)
-// CHECK-SPIR-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 3), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP7:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype(<{ [1 x <{ [[S]], target("spirv.Padding", 8) }>], [[S]] }>) @c4, <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP8:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([2 x [[STRUCT_S]]]) [[C]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP9:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 7), i32 0)
+// CHECK-SPIR-NEXT:    [[TMP10:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 7), i32 0)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD2:%.*]] = load i32, ptr addrspace(12) [[TMP9]], align 4
 // CHECK-SPIR-NEXT:    store i32 [[CBUF_LOAD2]], ptr [[TMP10]], align 4
-// CHECK-SPIR-NEXT:    [[TMP11:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 3), i32 1)
-// CHECK-SPIR-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 3), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP11:%.*]] = call ptr addrspace(12) (ptr addrspace(12), <1 x i32>, ...) @llvm.structured.gep.p12.v1i32(ptr addrspace(12) elementtype([[S]]) [[TMP7]], <1 x i32> splat (i32 7), i32 1)
+// CHECK-SPIR-NEXT:    [[TMP12:%.*]] = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype([[STRUCT_S]]) [[TMP8]], <1 x i32> splat (i32 7), i32 1)
 // CHECK-SPIR-NEXT:    [[CBUF_LOAD3:%.*]] = load float, ptr addrspace(12) [[TMP11]], align 4
 // CHECK-SPIR-NEXT:    store float [[CBUF_LOAD3]], ptr [[TMP12]], align 4
 // CHECK-SPIR-NEXT:    ret void

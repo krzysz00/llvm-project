@@ -4,25 +4,25 @@
 
 define void @runtime_array_nested_access(ptr %src, i32 %index) {
 entry:
-  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([0 x %S]) %src, <2 x i32> <i32 4, i32 3>, i32 %index, i32 1)
+  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([0 x %S]) %src, <2 x i32> <i32 4, i32 7>, i32 %index, i32 1)
   ret void
 }
 
 define void @normal_array_access(ptr %src, i32 %index) {
 entry:
-  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([2 x %S]) %src, <2 x i32> <i32 5, i32 3>, i32 %index, i32 1)
+  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([2 x %S]) %src, <2 x i32> <i32 5, i32 7>, i32 %index, i32 1)
   ret void
 }
 
 define void @normal_array_constant_index(ptr %src) {
 entry:
-  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([2 x %S]) %src, <2 x i32> <i32 5, i32 3>, i32 1, i32 1)
+  %ptr = call ptr (ptr, <2 x i32>, ...) @llvm.structured.gep.p0.v2i32(ptr elementtype([2 x %S]) %src, <2 x i32> <i32 5, i32 7>, i32 1, i32 1)
   ret void
 }
 
 define void @struct_access(ptr %src) {
 entry:
-  %ptr = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%S) %src, <1 x i32> <i32 3>, i32 0)
+  %ptr = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%S) %src, <1 x i32> <i32 7>, i32 0)
   ret void
 }
 
@@ -64,6 +64,6 @@ entry:
 
 define void @struct_index_with_unknown_bits(ptr %src) {
 entry:
-  %ptr = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%S) %src, <1 x i32> <i32 65539>, i32 1)
+  %ptr = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%S) %src, <1 x i32> <i32 65543>, i32 1)
   ret void
 }

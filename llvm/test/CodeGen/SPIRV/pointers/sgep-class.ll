@@ -19,11 +19,11 @@ entry:
   ; CHECK: %[[#d_var:]] = OpFunctionParameter %[[#ptr_Derived]]
 
   ; Access Base part
-  %1 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%class.Derived) %d, <1 x i32> <i32 3>, i32 0)
+  %1 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%class.Derived) %d, <1 x i32> <i32 7>, i32 0)
   ; CHECK: %[[#ptr_base:]] = OpInBoundsAccessChain %[[#ptr_Base]] %[[#d_var]] %[[#idx_0]]
 
   ; Access field in Base
-  %2 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%class.Base) %1, <1 x i32> <i32 3>, i32 0)
+  %2 = call ptr (ptr, <1 x i32>, ...) @llvm.structured.gep.p0.v1i32(ptr elementtype(%class.Base) %1, <1 x i32> <i32 7>, i32 0)
   ; CHECK: %[[#ptr_field:]] = OpInBoundsAccessChain %[[#ptr_int]] %[[#ptr_base]] %[[#idx_0]]
 
   store i32 42, ptr %2, align 4
