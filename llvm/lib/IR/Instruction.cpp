@@ -481,6 +481,11 @@ void Instruction::dropPoisonGeneratingFlags() {
   case Instruction::Call: {
     if (auto *II = dyn_cast<IntrinsicInst>(this)) {
       switch (II->getIntrinsicID()) {
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz:
+      case Intrinsic::abs:
+        II->setOperand(1, ConstantInt::getFalse(getContext()));
+        break;
       case Intrinsic::structured_gep: {
         auto *SGEP = cast<StructuredGEPInst>(II);
         Type *Int32Ty = Type::getInt32Ty(getContext());
@@ -499,11 +504,6 @@ void Instruction::dropPoisonGeneratingFlags() {
                        ConstantVector::get(FlagValues));
         break;
       }
-      case Intrinsic::ctlz:
-      case Intrinsic::cttz:
-      case Intrinsic::abs:
-        II->setOperand(1, ConstantInt::getFalse(getContext()));
-        break;
       }
     }
     break;

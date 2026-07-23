@@ -58,6 +58,10 @@ bool Operator::hasPoisonGeneratingFlags() const {
   case Instruction::Call:
     if (auto *II = dyn_cast<IntrinsicInst>(this)) {
       switch (II->getIntrinsicID()) {
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz:
+      case Intrinsic::abs:
+        return cast<ConstantInt>(II->getArgOperand(1))->isOneValue();
       case Intrinsic::structured_gep: {
         auto *SGEP = cast<StructuredGEPInst>(II);
         SmallVector<StructuredGEPFlags, 4> IndexFlagValues =
@@ -74,10 +78,6 @@ bool Operator::hasPoisonGeneratingFlags() const {
         return any_of(zip_equal(IndexFlagValues, RequiredFlagValues),
                       HasDroppablePoisonGeneratingFlags);
       }
-      case Intrinsic::ctlz:
-      case Intrinsic::cttz:
-      case Intrinsic::abs:
-        return cast<ConstantInt>(II->getArgOperand(1))->isOneValue();
       }
     }
     [[fallthrough]];
