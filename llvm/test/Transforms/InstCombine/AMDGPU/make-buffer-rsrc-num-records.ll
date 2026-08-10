@@ -11,11 +11,13 @@ define ptr addrspace(8) @from_i64(ptr %p, i16 %stride, i64 %num, i32 %flags) {
 ; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS32-LABEL: @from_i64(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i64 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS32-NEXT:    [[TMP1:%.*]] = trunc i64 [[NUM:%.*]] to i32
+; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_i64(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i64 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS45-NEXT:    [[TMP1:%.*]] = trunc i64 [[NUM:%.*]] to i45
+; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
   %rsrc = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr %p, i16 %stride, i64 %num, i32 %flags)
@@ -28,11 +30,13 @@ define ptr addrspace(8) @from_i128(ptr %p, i16 %stride, i128 %num, i32 %flags) {
 ; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS32-LABEL: @from_i128(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i128(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i128 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS32-NEXT:    [[TMP1:%.*]] = trunc i128 [[NUM:%.*]] to i32
+; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_i128(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i128(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i128 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS45-NEXT:    [[TMP1:%.*]] = trunc i128 [[NUM:%.*]] to i45
+; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
   %rsrc = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i128(ptr %p, i16 %stride, i128 %num, i32 %flags)
@@ -49,7 +53,8 @@ define ptr addrspace(8) @from_i32(ptr %p, i16 %stride, i32 %num, i32 %flags) {
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_i32(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS45-NEXT:    [[TMP1:%.*]] = zext i32 [[NUM:%.*]] to i45
+; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
   %rsrc = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr %p, i16 %stride, i32 %num, i32 %flags)
@@ -62,7 +67,8 @@ define ptr addrspace(8) @from_i45(ptr %p, i16 %stride, i45 %num, i32 %flags) {
 ; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS32-LABEL: @from_i45(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS32-NEXT:    [[TMP1:%.*]] = trunc i45 [[NUM:%.*]] to i32
+; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_i45(
@@ -79,11 +85,13 @@ define ptr addrspace(8) @from_i16(ptr %p, i16 %stride, i16 %num, i32 %flags) {
 ; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS32-LABEL: @from_i16(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i16(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i16 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS32-NEXT:    [[TMP1:%.*]] = zext i16 [[NUM:%.*]] to i32
+; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_i16(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i16(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i16 [[NUM:%.*]], i32 [[FLAGS:%.*]])
+; RECORDS45-NEXT:    [[TMP1:%.*]] = zext i16 [[NUM:%.*]] to i45
+; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 [[TMP1]], i32 [[FLAGS:%.*]])
 ; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
   %rsrc = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i16(ptr %p, i16 %stride, i16 %num, i32 %flags)
@@ -96,11 +104,11 @@ define ptr addrspace(8) @from_constant(ptr %p, i16 %stride, i32 %flags) {
 ; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS32-LABEL: @from_constant(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i64 4294967296, i32 [[FLAGS:%.*]])
+; RECORDS32-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i32(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i32 0, i32 [[FLAGS:%.*]])
 ; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
 ; RECORDS45-LABEL: @from_constant(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i64 4294967296, i32 [[FLAGS:%.*]])
+; RECORDS45-NEXT:    [[RSRC:%.*]] = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i45(ptr [[P:%.*]], i16 [[STRIDE:%.*]], i45 4294967296, i32 [[FLAGS:%.*]])
 ; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
 ;
   %rsrc = call ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr %p, i16 %stride, i64 4294967296, i32 %flags)
@@ -108,20 +116,7 @@ define ptr addrspace(8) @from_constant(ptr %p, i16 %stride, i32 %flags) {
 }
 
 define ptr addrspace(8) @keeps_metadata_and_attributes(ptr %p, i16 %stride, i64 %num, i32 %flags) {
-; GENERIC-LABEL: @keeps_metadata_and_attributes(
-; GENERIC-NEXT:    [[RSRC:%.*]] = tail call align 16 ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr noundef [[P:%.*]], i16 [[STRIDE:%.*]], i64 [[NUM:%.*]], i32 [[FLAGS:%.*]]), !amdgpu.uniform [[META0:![0-9]+]]
-; GENERIC-NEXT:    ret ptr addrspace(8) [[RSRC]]
-;
-; RECORDS32-LABEL: @keeps_metadata_and_attributes(
-; RECORDS32-NEXT:    [[RSRC:%.*]] = tail call align 16 ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr noundef [[P:%.*]], i16 [[STRIDE:%.*]], i64 [[NUM:%.*]], i32 [[FLAGS:%.*]]), !amdgpu.uniform [[META0:![0-9]+]]
-; RECORDS32-NEXT:    ret ptr addrspace(8) [[RSRC]]
-;
-; RECORDS45-LABEL: @keeps_metadata_and_attributes(
-; RECORDS45-NEXT:    [[RSRC:%.*]] = tail call align 16 ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr noundef [[P:%.*]], i16 [[STRIDE:%.*]], i64 [[NUM:%.*]], i32 [[FLAGS:%.*]]), !amdgpu.uniform [[META0:![0-9]+]]
-; RECORDS45-NEXT:    ret ptr addrspace(8) [[RSRC]]
-;
   %rsrc = tail call align 16 ptr addrspace(8) @llvm.amdgcn.make.buffer.rsrc.p8.p0.i64(ptr noundef %p, i16 %stride, i64 %num, i32 %flags), !amdgpu.uniform !0
   ret ptr addrspace(8) %rsrc
 }
-
 !0 = !{}

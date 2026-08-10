@@ -353,6 +353,16 @@ public:
   bool hasRelaxedBufferOOBMode() const { return BufferOOBRelaxed; }
   bool hasRelaxedTBufferOOBMode() const { return TBufferOOBRelaxed; }
 
+  // Return the width of the num_records field in buffer resources if it
+  // has a known value.
+  std::optional<unsigned> getBufferResourceNumRecordsWidth() const {
+    if (AMDGPU::isPseudoTarget(getCPU()))
+      return std::nullopt;
+    if (has45BitNumRecordsBufferResource())
+      return 45;
+    return 32;
+  }
+
   bool isCuModeEnabled() const { return EnableCuMode; }
 
   bool isPreciseMemoryEnabled() const { return EnablePreciseMemory; }

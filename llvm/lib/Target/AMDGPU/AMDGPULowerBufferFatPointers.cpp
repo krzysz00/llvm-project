@@ -901,16 +901,17 @@ LegalizeBufferContentTypesVisitor::analyzeOobProperties(Value *Ptr, Type *Ty,
   if (NumRecords->isAllOnesValue())
     Result.NoPartialOOB = true;
 
-  const SCEV *BoundsDiff;
-  if (ST->has45BitNumRecordsBufferResource()) {
-    const SCEV *PtrDiffExt =
-        SE->getNoopOrZeroExtend(PtrDiff, NumRecords->getType());
-    BoundsDiff = SE->getMinusSCEV(NumRecords, PtrDiffExt);
-  } else {
-    const SCEV *NumRecordsI32 =
-        SE->getTruncateOrNoop(NumRecords, IRB.getInt32Ty());
-    BoundsDiff = SE->getMinusSCEV(NumRecordsI32, PtrDiff);
-  }
+  // If we don't know how wide num_records is, conservatively avoid truncating
+  // it.
+  Type *NumRecordsTy =
+      IRB.getIntNTy(ST->getBufferResourceNumRecordsWidth().value_or(64));
+  // Compare in i64 so we can properly detect Offset > Bounds, after making sure
+  // to clamp num_records to its hardware type.
+  Type *CompareTy = IRB.getInt64Ty();
+  const SCEV *Bound = SE->getNoopOrZeroExtend(
+      SE->getTruncateOrZeroExtend(NumRecords, NumRecordsTy), CompareTy);
+  const SCEV *BoundsDiff =
+      SE->getMinusSCEV(Bound, SE->getNoopOrZeroExtend(PtrDiff, CompareTy));
 
   if (SE->getSignedRangeMin(BoundsDiff).sge(TypeSize) ||
       SE->isKnownNonPositive(BoundsDiff))
